@@ -180,7 +180,7 @@ function createGame(player1, player2) {
 io.on('connection', (socket) => {
   console.log('Player connected:', socket.id);
   
-  socket.on('reconnectToSession', (sessionId) => {
+  socket.on('reconnectToSession', (data) => {
     const { sessionId, playerName } = data;
     const session = playerSessions.get(sessionId);
     
