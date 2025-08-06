@@ -36,33 +36,8 @@ export const useSocket = () => {
   }, []);
 
   const resetToLobby = () => {
-    // Disconnect current socket to free up the name
-    if (socket) {
-      socket.disconnect();
-    }
-    
-    setGamePhase(GamePhase.LOBBY);
-    setGameState({
-      gameId: null,
-      players: [],
-      currentTurn: null,
-      gameStarted: false,
-      gameEnded: false,
-      winner: null,
-      allGuesses: [],
-      gameNumber: 1
-    });
-    setPlayerName('');
-    setMyNumber('');
-    setError('');
-    setRematchState({ requested: false, opponentRequested: false });
-    
-    // Create new socket connection
-    const newSocket = io();
-    setSocket(newSocket);
-    
-    // Re-setup all event listeners
-    setupSocketListeners(newSocket);
+    // Force a complete page reload to ensure clean state
+    window.location.reload();
   };
 
   const setupSocketListeners = (socketInstance: Socket) => {
@@ -170,7 +145,7 @@ export const useSocket = () => {
     socketInstance.on('opponentDisconnected', () => {
       setError('Your opponent has disconnected. Returning to lobby...');
       setTimeout(() => {
-        resetToLobby();
+        window.location.reload();
       }, 3000);
     });
 

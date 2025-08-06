@@ -33,15 +33,13 @@ function App() {
     if (gamePhase === GamePhase.PLAYING || gamePhase === GamePhase.SETUP) {
       setShowReturnConfirm(true);
     } else {
-      // Always reset to lobby to get a fresh start
-      window.location.reload();
+      resetToLobby();
     }
   };
 
   const confirmReturnToLobby = () => {
     setShowReturnConfirm(false);
-    // Force a complete reset
-    window.location.reload();
+    resetToLobby();
   };
 
   const cancelReturn = () => {
