@@ -23,6 +23,7 @@ function App() {
     playAgain,
     generateRandomNumber,
     setError,
+    resetToLobby,
     requestRematch,
     acceptRematch
   } = useSocket();

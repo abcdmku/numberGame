@@ -4,6 +4,7 @@ import { GameState, Player, GuessData, GamePhase } from '../types/game';
 
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const [gameState, setGameState] = useState<GameState>({
     gameId: null,
     players: [],
@@ -26,6 +27,7 @@ export const useSocket = () => {
   useEffect(() => {
     const newSocket = io();
     setSocket(newSocket);
+    socketRef.current = newSocket;
 
     newSocket.on('waitingForPlayer', () => {
       setGamePhase(GamePhase.WAITING);
@@ -36,12 +38,41 @@ export const useSocket = () => {
 
     return () => {
       newSocket.close();
+      socketRef.current = null;
     };
   }, []);
 
   const resetToLobby = () => {
-    // Force a complete page reload to ensure clean state
-    window.location.reload();
+    // Disconnect current socket to release name on server
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+    
+    // Reset all state
+    setGameState({
+      gameId: null,
+      players: [],
+      currentTurn: null,
+      gameStarted: false,
+      gameEnded: false,
+      winner: null,
+      allGuesses: [],
+      gameNumber: 1
+    });
+    setGamePhase(GamePhase.LOBBY);
+    setPlayerName('');
+    setMyNumber('');
+    setError('');
+    setRematchState({ requested: false, opponentRequested: false });
+    
+    // Create new socket connection after a brief delay to ensure server cleanup
+    setTimeout(() => {
+      const newSocket = io();
+      setSocket(newSocket);
+      socketRef.current = newSocket;
+      setupSocketListeners(newSocket);
+    }, 100);
   };
 
   const setupSocketListeners = (socketInstance: Socket) => {
@@ -168,39 +199,39 @@ export const useSocket = () => {
   };
 
   const joinLobby = (name: string) => {
-    if (socket && name.trim()) {
+    if (socketRef.current && name.trim()) {
       setPlayerName(name.trim());
-      socket.emit('joinLobby', name.trim());
+      socketRef.current.emit('joinLobby', name.trim());
     }
   };
 
   const setNumber = (number: string) => {
-    if (socket && gameState.gameId) {
+    if (socketRef.current && gameState.gameId) {
       setMyNumber(number);
-      socket.emit('setNumber', { gameId: gameState.gameId, number });
+      socketRef.current.emit('setNumber', { gameId: gameState.gameId, number });
     }
   };
 
   const makeGuess = (guess: string) => {
-    if (socket && gameState.gameId) {
-      socket.emit('makeGuess', { gameId: gameState.gameId, guess });
+    if (socketRef.current && gameState.gameId) {
+      socketRef.current.emit('makeGuess', { gameId: gameState.gameId, guess });
     }
   };
 
   const playAgain = () => {
-    if (socket && gameState.gameId) {
-      socket.emit('playAgain', { gameId: gameState.gameId });
+    if (socketRef.current && gameState.gameId) {
+      socketRef.current.emit('playAgain', { gameId: gameState.gameId });
     }
   };
 
   const generateRandomNumber = () => {
-    if (socket) {
-      socket.emit('generateNumber');
+    if (socketRef.current) {
+      socketRef.current.emit('generateNumber');
     }
   };
 
   return {
-    socket,
+    socket: socketRef.current,
     gameState,
     gamePhase,
     playerName,
@@ -213,15 +244,16 @@ export const useSocket = () => {
     playAgain,
     generateRandomNumber,
     setError,
+    resetToLobby,
     requestRematch: () => {
-      if (socket && gameState.gameId) {
-        socket.emit('requestRematch', { gameId: gameState.gameId });
+      if (socketRef.current && gameState.gameId) {
+        socketRef.current.emit('requestRematch', { gameId: gameState.gameId });
         setRematchState(prev => ({ ...prev, requested: true }));
       }
     },
     acceptRematch: () => {
-      if (socket && gameState.gameId) {
-        socket.emit('acceptRematch', { gameId: gameState.gameId });
+      if (socketRef.current && gameState.gameId) {
+        socketRef.current.emit('acceptRematch', { gameId: gameState.gameId });
         setRematchState({ requested: false, opponentRequested: false });
       }
     }
