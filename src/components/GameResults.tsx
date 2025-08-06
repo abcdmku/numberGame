@@ -78,7 +78,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 w-full max-w-2xl shadow-2xl border border-white/20 text-center">
+      <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-3xl p-6 md:p-8 w-full md:max-w-2xl shadow-2xl border-0 md:border border-white/20 text-center min-h-screen md:min-h-0 flex flex-col justify-center">
         <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${
           isWinner 
             ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
@@ -129,7 +129,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
 
         {/* Complete Game History */}
         <div className="mb-8">
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20">
+          <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-2xl p-4 md:p-6 shadow-xl border-0 md:border border-white/20">
             <div className="flex items-center gap-2 mb-6">
               <History className="w-5 h-5 text-blue-300" />
               <h3 className="text-xl font-semibold text-white">Complete Game History</h3>

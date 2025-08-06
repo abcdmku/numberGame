@@ -103,7 +103,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-2 md:p-4">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-white mb-2">
@@ -125,7 +125,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Game Input */}
           <div className="lg:col-span-1">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20">
+            <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-2xl p-4 md:p-6 shadow-xl border-0 md:border border-white/20">
               <div className="mb-6">
                 <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
                   isMyTurn 
@@ -217,7 +217,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
           {/* Game History */}
           <div className="lg:col-span-2">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20">
+            <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-2xl p-4 md:p-6 shadow-xl border-0 md:border border-white/20">
               <div className="flex items-center gap-2 mb-6">
                 <History className="w-5 h-5 text-blue-300" />
                 <h3 className="text-xl font-semibold text-white">Game History</h3>

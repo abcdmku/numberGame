@@ -60,7 +60,7 @@ function App() {
       {/* Return to Lobby Confirmation Dialog */}
       {showReturnConfirm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 w-full max-w-md shadow-2xl border border-white/20">
+          <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-2xl p-6 w-full md:max-w-md shadow-2xl border-0 md:border border-white/20">
             <h3 className="text-xl font-bold text-white mb-4">Leave Game?</h3>
             <p className="text-blue-100 mb-6">
               Are you sure you want to return to the lobby? This will end your current game and disconnect you from your opponent.
@@ -68,13 +68,13 @@ function App() {
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={confirmReturnToLobby}
-                className="w-full sm:flex-1 bg-red-500/80 backdrop-blur-sm text-white py-3 px-6 rounded-xl font-semibold hover:bg-red-600/80 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200"
+                className="w-full sm:flex-1 bg-red-500/80 backdrop-blur-sm text-white py-3 px-6 rounded-none md:rounded-xl font-semibold hover:bg-red-600/80 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200"
               >
                 Yes, Leave Game
               </button>
               <button
                 onClick={cancelReturn}
-                className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-3 px-6 rounded-xl font-semibold hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200"
+                className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-3 px-6 rounded-none md:rounded-xl font-semibold hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200"
               >
                 Cancel
               </button>

@@ -62,7 +62,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 w-full max-w-2xl shadow-2xl border border-white/20">
+      <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-3xl p-6 md:p-8 w-full md:max-w-2xl shadow-2xl border-0 md:border border-white/20 min-h-screen md:min-h-0 flex flex-col justify-center">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-white mb-2">
             Game {gameNumber} - Number Setup
