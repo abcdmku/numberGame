@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"node server.js\" \"wait-on tcp:3001 && vite --host\"",
+    "dev": "concurrently \"node server.js\" \"wait-on tcp:3001 && vite --host --port 5173\"",
     "server": "node server.js",
-    "client": "vite",
+    "client": "vite --host --port 5173",
     "build": "node scripts/update-version.js && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
