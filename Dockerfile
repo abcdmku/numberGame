@@ -6,6 +6,9 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
+# Clear npm cache to avoid EEXIST errors
+RUN npm cache clean --force
+
 # Install all dependencies (including dev dependencies for build)
 RUN npm ci
 
