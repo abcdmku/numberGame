@@ -107,12 +107,12 @@ export const useSocket = () => {
       setGameState(gameStateData);
       setIsReconnecting(false);
       
-      // Set player name from reconnected session
-      const myPlayer = gameStateData.players.find((p: any) => p.sessionId === sessionId);
-      if (myPlayer) {
-        setPlayerName(myPlayer.name);
-        localStorage.setItem('playerName', myPlayer.name);
-      }
+     // Player name should already be set from localStorage
+     // Just ensure it's consistent with the session
+     const savedPlayerName = localStorage.getItem('playerName');
+     if (savedPlayerName) {
+       setPlayerName(savedPlayerName);
+     }
       
       if (gameStateData.gameEnded) {
         setGamePhase(GamePhase.ENDED);
