@@ -16,8 +16,8 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 w-full max-w-md shadow-2xl border border-white/20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-0 sm:p-4">
+      <div className="bg-white/10 backdrop-blur-md rounded-none sm:rounded-3xl p-6 sm:p-8 w-full sm:max-w-md shadow-2xl border-0 sm:border border-white/20 min-h-screen sm:min-h-0 flex flex-col justify-center">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-4">
             <Gamepad2 className="w-8 h-8 text-white" />
