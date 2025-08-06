@@ -149,7 +149,7 @@ export const useSocket = () => {
     socketInstance.on('opponentDisconnected', () => {
       setError('Your opponent has disconnected. Returning to lobby...');
       setTimeout(() => {
-        window.location.reload();
+        resetToLobby();
       }, 3000);
     });
 
