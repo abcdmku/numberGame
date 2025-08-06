@@ -5,6 +5,8 @@ import { GameState, Player, GuessData, GamePhase } from '../types/game';
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const [gameState, setGameState] = useState<GameState>({
     gameId: null,
     players: [],
@@ -23,16 +25,24 @@ export const useSocket = () => {
     requested: false,
     opponentRequested: false
   });
+  const [opponentStatus, setOpponentStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected');
 
   useEffect(() => {
+    // Check for existing session in localStorage
+    const savedSessionId = localStorage.getItem('gameSessionId');
+    if (savedSessionId) {
+      setSessionId(savedSessionId);
+      setIsReconnecting(true);
+    }
+    
     const newSocket = io();
     setSocket(newSocket);
     socketRef.current = newSocket;
 
-    newSocket.on('waitingForPlayer', () => {
-      setGamePhase(GamePhase.WAITING);
-      setError('');
-    });
+    // Try to reconnect to existing session first
+    if (savedSessionId) {
+      newSocket.emit('reconnectToSession', savedSessionId);
+    }
 
     setupSocketListeners(newSocket);
 
@@ -43,6 +53,12 @@ export const useSocket = () => {
   }, []);
 
   const resetToLobby = () => {
+    // Clear session
+    localStorage.removeItem('gameSessionId');
+    setSessionId(null);
+    setIsReconnecting(false);
+    setOpponentStatus('connected');
+    
     // Disconnect current socket to release name on server
     if (socketRef.current) {
       socketRef.current.disconnect();
@@ -76,12 +92,43 @@ export const useSocket = () => {
   };
 
   const setupSocketListeners = (socketInstance: Socket) => {
-    socketInstance.on('waitingForPlayer', () => {
+    socketInstance.on('sessionNotFound', () => {
+      localStorage.removeItem('gameSessionId');
+      setSessionId(null);
+      setIsReconnecting(false);
+      setGamePhase(GamePhase.LOBBY);
+    });
+    
+    socketInstance.on('sessionReconnected', (gameStateData) => {
+      setGameState(gameStateData);
+      setIsReconnecting(false);
+      
+      if (gameStateData.gameEnded) {
+        setGamePhase(GamePhase.ENDED);
+      } else if (gameStateData.gameStarted) {
+        setGamePhase(GamePhase.PLAYING);
+      } else {
+        setGamePhase(GamePhase.SETUP);
+      }
+      
+      setOpponentStatus('connected');
+      setError('');
+    });
+    
+    socketInstance.on('waitingForPlayer', (data) => {
+      if (data?.sessionId) {
+        setSessionId(data.sessionId);
+        localStorage.setItem('gameSessionId', data.sessionId);
+      }
       setGamePhase(GamePhase.WAITING);
       setError('');
     });
 
     socketInstance.on('gameFound', (data) => {
+      if (data.sessionId) {
+        setSessionId(data.sessionId);
+        localStorage.setItem('gameSessionId', data.sessionId);
+      }
       setGameState(prev => ({
         ...prev,
         gameId: data.gameId,
@@ -92,6 +139,11 @@ export const useSocket = () => {
       setError('');
     });
 
+    socketInstance.on('opponentReconnected', (data) => {
+      setOpponentStatus('connected');
+      setError('');
+    });
+    
     socketInstance.on('playerReady', (data) => {
       setGameState(prev => ({
         ...prev,
@@ -177,8 +229,29 @@ export const useSocket = () => {
       setError(message);
     });
 
-    socketInstance.on('opponentDisconnected', () => {
-      setError('Your opponent has disconnected. Returning to lobby...');
+    socketInstance.on('opponentDisconnected', (data) => {
+      setOpponentStatus('disconnected');
+      if (data?.canReconnect) {
+        setError(`${data.playerName} disconnected but can reconnect. Game paused.`);
+      } else {
+        setError('Your opponent has disconnected. Returning to lobby...');
+        setTimeout(() => {
+          resetToLobby();
+        }, 3000);
+      }
+    });
+    
+    socketInstance.on('opponentDisconnectedWaiting', (data) => {
+      if (data?.sessionId) {
+        setSessionId(data.sessionId);
+        localStorage.setItem('gameSessionId', data.sessionId);
+      }
+      setOpponentStatus('disconnected');
+      setError('Your opponent disconnected. Waiting for them to reconnect or for a new opponent...');
+    });
+    
+    socketInstance.on('opponentLeft', () => {
+      setError('Your opponent has left the game. Returning to lobby...');
       setTimeout(() => {
         resetToLobby();
       }, 3000);
@@ -199,6 +272,10 @@ export const useSocket = () => {
   };
 
   const joinLobby = (name: string) => {
+    // Clear any existing session when joining lobby fresh
+    localStorage.removeItem('gameSessionId');
+    setSessionId(null);
+    
     if (socketRef.current && name.trim()) {
       setPlayerName(name.trim());
       socketRef.current.emit('joinLobby', name.trim());
@@ -230,6 +307,12 @@ export const useSocket = () => {
     }
   };
 
+  const waitForOpponent = () => {
+    if (socketRef.current && gameState.gameId) {
+      socketRef.current.emit('waitForOpponent', { gameId: gameState.gameId });
+    }
+  };
+
   return {
     socket: socketRef.current,
     gameState,
@@ -238,6 +321,9 @@ export const useSocket = () => {
     myNumber,
     error,
     rematchState,
+    sessionId,
+    isReconnecting,
+    opponentStatus,
     joinLobby,
     setNumber,
     makeGuess,
@@ -245,6 +331,7 @@ export const useSocket = () => {
     generateRandomNumber,
     setError,
     resetToLobby,
+    waitForOpponent,
     requestRematch: () => {
       if (socketRef.current && gameState.gameId) {
         socketRef.current.emit('requestRematch', { gameId: gameState.gameId });

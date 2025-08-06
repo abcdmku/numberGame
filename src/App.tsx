@@ -17,6 +17,9 @@ function App() {
     myNumber,
     error,
     rematchState,
+    sessionId,
+    isReconnecting,
+    opponentStatus,
     joinLobby,
     setNumber,
     makeGuess,
@@ -24,6 +27,7 @@ function App() {
     generateRandomNumber,
     setError,
     resetToLobby,
+    waitForOpponent,
     requestRematch,
     acceptRematch
   } = useSocket();
@@ -48,6 +52,21 @@ function App() {
   };
 
   const myId = gameState.players.find(p => p.name === playerName)?.id || '';
+
+  // Show reconnecting screen
+  if (isReconnecting) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 max-w-md shadow-2xl border border-white/20 text-center">
+          <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-6 mx-auto">
+            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-4">Reconnecting...</h2>
+          <p className="text-blue-100">Restoring your game session</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -103,7 +122,11 @@ function App() {
             <ArrowLeft className="w-5 h-5" />
             <span className="hidden sm:inline">Return to Lobby</span>
           </button>
-          <WaitingRoom playerName={playerName} />
+          <WaitingRoom 
+            playerName={playerName} 
+            opponentStatus={opponentStatus}
+            onWaitForOpponent={waitForOpponent}
+          />
         </>
       )}
       
@@ -115,6 +138,7 @@ function App() {
           onGenerateRandom={generateRandomNumber}
           myNumber={myNumber}
           gameNumber={gameState.gameNumber}
+         opponentStatus={opponentStatus}
         />
       )}
       
@@ -127,6 +151,7 @@ function App() {
           onMakeGuess={makeGuess}
           gameNumber={gameState.gameNumber}
           gameState={gameState}
+          opponentStatus={opponentStatus}
         />
       )}
       

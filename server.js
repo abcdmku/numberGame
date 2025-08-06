@@ -46,8 +46,14 @@ const waitingPlayers = new Map();
 const activeGames = new Map();
 const playerSockets = new Map();
 const usedNames = new Map(); // Map socketId -> normalizedName for easier cleanup
+const playerSessions = new Map(); // Map sessionId -> { playerId, gameId, playerName }
+const gamesByPlayer = new Map(); // Map playerId -> gameId for quick lookup
 
 // Utility functions
+function generateSessionId() {
+  return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
 function generateRandomNumber() {
   const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
   const result = [];
@@ -65,6 +71,20 @@ function generateRandomNumber() {
   }
   
   return result.join('');
+}
+
+function cleanupPlayerName(socketId) {
+  if (usedNames.has(socketId)) {
+    const playerName = usedNames.get(socketId);
+    usedNames.delete(socketId);
+    console.log(`Removed name "${playerName}" for socket ${socketId}`);
+  }
+}
+
+function findGameByPlayerId(playerId) {
+  return Array.from(activeGames.values()).find(game => 
+    game.players[playerId]
+  );
 }
 
 function validateNumber(number) {
@@ -117,13 +137,21 @@ function calculateFeedback(guess, target) {
 
 function createGame(player1, player2) {
   const gameId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Generate session IDs for both players
+  const player1SessionId = generateSessionId();
+  const player2SessionId = generateSessionId();
+  
   const game = {
     id: gameId,
     players: {
       [player1.id]: {
         ...player1,
+        sessionId: player1SessionId,
         number: null,
         ready: false,
+const sessionsBySocket = new Map(); // Map socketId -> sessionId for quick lookup
+const disconnectedPlayers = new Map(); // Map sessionId -> { disconnectTime, gameId, playerData }
         guesses: [],
         gamesWon: 0
       },
@@ -152,6 +180,74 @@ function createGame(player1, player2) {
 io.on('connection', (socket) => {
   console.log('Player connected:', socket.id);
   
+  socket.on('reconnectToSession', (sessionId) => {
+    const session = playerSessions.get(sessionId);
+    if (!session) {
+      socket.emit('sessionNotFound');
+      return;
+    }
+    
+    const game = activeGames.get(session.gameId);
+    if (!game) {
+      socket.emit('sessionNotFound');
+      return;
+    }
+    
+    // Update socket references
+    const oldSocketId = session.socketId;
+    session.socketId = socket.id;
+    sessionsBySocket.set(socket.id, sessionId);
+    playerSockets.set(socket.id, socket);
+    
+    // Update game player socket reference
+    if (game.players[session.playerId]) {
+      game.players[session.playerId].socketId = socket.id;
+    }
+    
+    // Clean up old socket references
+    if (oldSocketId) {
+      playerSockets.delete(oldSocketId);
+      sessionsBySocket.delete(oldSocketId);
+      cleanupPlayerName(oldSocketId);
+    }
+    
+    // Remove from disconnected players if they were there
+    disconnectedPlayers.delete(sessionId);
+    
+    // Join game room
+    socket.join(session.gameId);
+    
+    // Send current game state
+    const gameState = {
+      gameId: game.id,
+      players: Object.values(game.players),
+      currentTurn: game.currentTurn,
+      gameStarted: game.gameStarted,
+      gameEnded: game.gameEnded,
+      winner: game.winner,
+      gameNumber: game.gameNumber,
+      allGuesses: [
+        ...Object.values(game.players).flatMap(p => 
+          p.guesses?.map(g => ({ ...g, playerId: p.id })) || []
+        )
+      ].sort((a, b) => a.turn - b.turn),
+      potentialWinner: game.potentialWinner,
+      isDraw: game.isDraw
+    };
+    
+    socket.emit('sessionReconnected', gameState);
+    
+    // Notify opponent that player reconnected
+    const opponentId = Object.keys(game.players).find(id => id !== session.playerId);
+    if (opponentId && playerSockets.has(game.players[opponentId].socketId)) {
+      socket.to(session.gameId).emit('opponentReconnected', {
+        playerName: session.playerName
+      });
+    }
+    
+    console.log(`Player ${session.playerName} reconnected to game ${session.gameId}`);
+  });
+  
   socket.on('joinLobby', (playerName) => {
     // Check if name is already in use
     const normalizedName = playerName.trim().toLowerCase();
@@ -169,6 +265,18 @@ io.on('connection', (socket) => {
     
     playerSockets.set(socket.id, socket);
     usedNames.set(socket.id, normalizedName);
+    
+    // Create session for this player
+    const sessionId = generateSessionId();
+    const session = {
+      playerId: socket.id,
+      gameId: null,
+      playerName: playerName,
+      socketId: socket.id
+    };
+    playerSessions.set(sessionId, session);
+    sessionsBySocket.set(socket.id, sessionId);
+    
     console.log(`Player "${playerName}" (${socket.id}) joined. Used names:`, Array.from(usedNames.values()));
     
     // Check if there's a waiting player
@@ -179,6 +287,12 @@ io.on('connection', (socket) => {
       // Create game
       const game = createGame(waitingPlayer, player);
       
+      // Update sessions with game ID
+      const waitingSession = Array.from(playerSessions.values()).find(s => s.playerId === waitingPlayer.id);
+      const playerSession = Array.from(playerSessions.values()).find(s => s.playerId === player.id);
+      if (waitingSession) waitingSession.gameId = game.id;
+      if (playerSession) playerSession.gameId = game.id;
+      
       // Join both players to game room
       const waitingSocket = playerSockets.get(waitingPlayer.id);
       waitingSocket.join(game.id);
@@ -187,13 +301,14 @@ io.on('connection', (socket) => {
       // Notify both players
       io.to(game.id).emit('gameFound', {
         gameId: game.id,
+        sessionId: sessionId,
         players: Object.values(game.players),
         currentTurn: game.currentTurn
       });
     } else {
       // Add to waiting list
       waitingPlayers.set(socket.id, player);
-      socket.emit('waitingForPlayer');
+      socket.emit('waitingForPlayer', { sessionId });
     }
   });
   
@@ -388,6 +503,14 @@ io.on('connection', (socket) => {
     });
   });
   
+  socket.on('waitForOpponent', ({ gameId }) => {
+    const game = activeGames.get(gameId);
+    if (!game) return;
+    
+    const sessionId = sessionsBySocket.get(socket.id);
+    socket.emit('opponentDisconnectedWaiting', { sessionId });
+  });
+  
   socket.on('generateNumber', () => {
     const randomNumber = generateRandomNumber();
     socket.emit('numberGenerated', randomNumber);
@@ -396,31 +519,69 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Player disconnected:', socket.id);
     
-    // Clean up player name
-    if (usedNames.has(socket.id)) {
-      const playerName = usedNames.get(socket.id);
-      usedNames.delete(socket.id);
-      console.log(`Removed name "${playerName}" for disconnected player ${socket.id}`);
+    const sessionId = sessionsBySocket.get(socket.id);
+    const session = sessionId ? playerSessions.get(sessionId) : null;
+    
+    if (session && session.gameId) {
+      // Player was in a game - mark as disconnected but keep session
+      const game = activeGames.get(session.gameId);
+      if (game && !game.gameEnded) {
+        disconnectedPlayers.set(sessionId, {
+          disconnectTime: Date.now(),
+          gameId: session.gameId,
+          playerData: game.players[session.playerId]
+        });
+        
+        // Notify opponent
+        const opponentId = Object.keys(game.players).find(id => id !== session.playerId);
+        if (opponentId && playerSockets.has(game.players[opponentId].socketId)) {
+          socket.to(session.gameId).emit('opponentDisconnected', {
+            playerName: session.playerName,
+            canReconnect: true
+          });
+        }
+        
+        console.log(`Player ${session.playerName} disconnected from game ${session.gameId}, session preserved`);
+      } else {
+        // Game ended, clean up completely
+        playerSessions.delete(sessionId);
+        if (game) activeGames.delete(game.id);
+      }
+    } else {
+      // Player was in lobby, clean up normally
+      if (sessionId) {
+        playerSessions.delete(sessionId);
+      }
+      waitingPlayers.delete(socket.id);
     }
     
-    // Remove from waiting players
-    waitingPlayers.delete(socket.id);
-    
-    // Clean up active games
-    const playerGames = Array.from(activeGames.values()).filter(game => 
-      game.players[socket.id]
-    );
-    
-    playerGames.forEach(game => {
-      const opponentId = Object.keys(game.players).find(id => id !== socket.id);
-      if (opponentId) {
-        io.to(opponentId).emit('opponentDisconnected');
-      }
-      activeGames.delete(game.id);
-    });
-    
+    // Clean up socket references
+    cleanupPlayerName(socket.id);
+    sessionsBySocket.delete(socket.id);
     playerSockets.delete(socket.id);
   });
+  
+  // Clean up old disconnected players (after 5 minutes)
+  setInterval(() => {
+    const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+    for (const [sessionId, data] of disconnectedPlayers.entries()) {
+      if (data.disconnectTime < fiveMinutesAgo) {
+        disconnectedPlayers.delete(sessionId);
+        playerSessions.delete(sessionId);
+        const game = activeGames.get(data.gameId);
+        if (game) {
+          // Notify remaining player that opponent won't return
+          const remainingPlayerId = Object.keys(game.players).find(id => id !== data.playerData.id);
+          if (remainingPlayerId && playerSockets.has(game.players[remainingPlayerId].socketId)) {
+            io.to(remainingPlayerId).emit('opponentLeft');
+          }
+          activeGames.delete(data.gameId);
+        }
+        console.log(`Cleaned up expired session ${sessionId}`);
+      }
+    }
+  }, 60000); // Check every minute
+    
   
   socket.on('requestRematch', ({ gameId }) => {
     const game = activeGames.get(gameId);
