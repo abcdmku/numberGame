@@ -8,7 +8,7 @@ interface WaitingRoomProps {
 export const WaitingRoom: React.FC<WaitingRoomProps> = ({ playerName }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="w-full text-center flex flex-col items-center">
+      <div className="bg-transparent md:bg-white/10 md:backdrop-blur-md rounded-none md:rounded-3xl p-6 md:p-8 w-full md:max-w-md md:shadow-2xl border-0 md:border md:border-white/20 text-center flex flex-col items-center">
         <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full mb-6">
           <Wifi className="w-8 h-8 text-white" />
         </div>
