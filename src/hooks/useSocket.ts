@@ -30,6 +30,10 @@ export const useSocket = () => {
     newSocket.on('waitingForPlayer', () => {
       setGamePhase(GamePhase.WAITING);
       setError('');
+    });
+
+    setupSocketListeners(newSocket);
+
     return () => {
       newSocket.close();
     };
@@ -177,8 +181,9 @@ export const useSocket = () => {
     }
   };
 
-    setupSocketListeners(newSocket);
   const makeGuess = (guess: string) => {
+    if (socket && gameState.gameId) {
+      socket.emit('makeGuess', { gameId: gameState.gameId, guess });
     }
   };
 
