@@ -33,25 +33,15 @@ function App() {
     if (gamePhase === GamePhase.PLAYING || gamePhase === GamePhase.SETUP) {
       setShowReturnConfirm(true);
     } else {
-      // If we have a player name, go to matchmaking, otherwise go to lobby
-      if (playerName) {
-        joinLobby(playerName);
-      } else {
-        // Reset to lobby state instead of reloading
-        setGamePhase(GamePhase.LOBBY);
-      }
+      // Always reset to lobby to get a fresh start
+      window.location.reload();
     }
   };
 
   const confirmReturnToLobby = () => {
     setShowReturnConfirm(false);
-    // Reset all state and return to lobby
-    if (gameState.gameId) {
-      // Only disconnect if we're in an active game
-      socket?.disconnect();
-    }
-    // Reset to lobby state instead of reloading
-    setGamePhase(GamePhase.LOBBY);
+    // Force a complete reset
+    window.location.reload();
   };
 
   const cancelReturn = () => {

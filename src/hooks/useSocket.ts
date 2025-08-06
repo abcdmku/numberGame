@@ -30,9 +30,48 @@ export const useSocket = () => {
     newSocket.on('waitingForPlayer', () => {
       setGamePhase(GamePhase.WAITING);
       setError('');
+    return () => {
+      newSocket.close();
+    };
+  }, []);
+
+  const resetToLobby = () => {
+    // Disconnect current socket to free up the name
+    if (socket) {
+      socket.disconnect();
+    }
+    
+    setGamePhase(GamePhase.LOBBY);
+    setGameState({
+      gameId: null,
+      players: [],
+      currentTurn: null,
+      gameStarted: false,
+      gameEnded: false,
+      winner: null,
+      allGuesses: [],
+      gameNumber: 1
+    });
+    setPlayerName('');
+    setMyNumber('');
+    setError('');
+    setRematchState({ requested: false, opponentRequested: false });
+    
+    // Create new socket connection
+    const newSocket = io();
+    setSocket(newSocket);
+    
+    // Re-setup all event listeners
+    setupSocketListeners(newSocket);
+  };
+
+  const setupSocketListeners = (socketInstance: Socket) => {
+    socketInstance.on('waitingForPlayer', () => {
+      setGamePhase(GamePhase.WAITING);
+      setError('');
     });
 
-    newSocket.on('gameFound', (data) => {
+    socketInstance.on('gameFound', (data) => {
       setGameState(prev => ({
         ...prev,
         gameId: data.gameId,
@@ -43,14 +82,14 @@ export const useSocket = () => {
       setError('');
     });
 
-    newSocket.on('playerReady', (data) => {
+    socketInstance.on('playerReady', (data) => {
       setGameState(prev => ({
         ...prev,
         players: data.players
       }));
     });
 
-    newSocket.on('gameStarted', (data) => {
+    socketInstance.on('gameStarted', (data) => {
       setGameState(prev => ({
         ...prev,
         currentTurn: data.currentTurn,
@@ -64,7 +103,7 @@ export const useSocket = () => {
       setError('');
     });
 
-    newSocket.on('guessMade', (data) => {
+    socketInstance.on('guessMade', (data) => {
       setGameState(prev => ({
         ...prev,
         currentTurn: data.currentTurn,
@@ -72,7 +111,7 @@ export const useSocket = () => {
       }));
     });
 
-    newSocket.on('playerWonButGameContinues', (data) => {
+    socketInstance.on('playerWonButGameContinues', (data) => {
       setGameState(prev => ({
         ...prev,
         currentTurn: data.currentTurn,
@@ -81,7 +120,7 @@ export const useSocket = () => {
       }));
     });
 
-    newSocket.on('gameEnded', (data) => {
+    socketInstance.on('gameEnded', (data) => {
       setGameState(prev => ({
         ...prev,
         gameEnded: true,
@@ -95,7 +134,7 @@ export const useSocket = () => {
       setGamePhase(GamePhase.ENDED);
     });
 
-    newSocket.on('newGameStarted', (data) => {
+    socketInstance.on('newGameStarted', (data) => {
       setGameState(prev => ({
         ...prev,
         currentTurn: data.currentTurn,
@@ -116,60 +155,37 @@ export const useSocket = () => {
       setRematchState({ requested: false, opponentRequested: false });
     });
 
-    newSocket.on('numberGenerated', (number) => {
+    socketInstance.on('numberGenerated', (number) => {
       setMyNumber(number);
     });
 
-    newSocket.on('numberError', (message) => {
+    socketInstance.on('numberError', (message) => {
       setError(message);
     });
 
-    newSocket.on('guessError', (message) => {
+    socketInstance.on('guessError', (message) => {
       setError(message);
     });
 
-    newSocket.on('opponentDisconnected', () => {
+    socketInstance.on('opponentDisconnected', () => {
       setError('Your opponent has disconnected. Returning to lobby...');
       setTimeout(() => {
-        // Reset to initial state
         resetToLobby();
       }, 3000);
     });
 
-    newSocket.on('rematchRequested', () => {
+    socketInstance.on('rematchRequested', () => {
       setRematchState(prev => ({ ...prev, opponentRequested: true }));
     });
 
-    newSocket.on('rematchAccepted', () => {
+    socketInstance.on('rematchAccepted', () => {
       setRematchState({ requested: false, opponentRequested: false });
     });
 
-    newSocket.on('nameError', (message) => {
+    socketInstance.on('nameError', (message) => {
       setError(message);
       setGamePhase(GamePhase.LOBBY);
     });
-
-    return () => {
-      newSocket.close();
-    };
-  }, []);
-
-  const resetToLobby = () => {
-    setGamePhase(GamePhase.LOBBY);
-    setGameState({
-      gameId: null,
-      players: [],
-      currentTurn: null,
-      gameStarted: false,
-      gameEnded: false,
-      winner: null,
-      allGuesses: [],
-      gameNumber: 1
-    });
-    setPlayerName('');
-    setMyNumber('');
-    setError('');
-    setRematchState({ requested: false, opponentRequested: false });
   };
 
   const joinLobby = (name: string) => {
@@ -186,10 +202,8 @@ export const useSocket = () => {
     }
   };
 
+    setupSocketListeners(newSocket);
   const makeGuess = (guess: string) => {
-    if (socket && gameState.gameId) {
-      socket.emit('makeGuess', { gameId: gameState.gameId, guess });
-      setError('');
     }
   };
 
