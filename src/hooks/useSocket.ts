@@ -98,6 +98,7 @@ export const useSocket = () => {
   const setupSocketListeners = (socketInstance: Socket) => {
     socketInstance.on('sessionNotFound', () => {
       localStorage.removeItem('gameSessionId');
+      localStorage.removeItem('playerName');
       setSessionId(null);
       setIsReconnecting(false);
       setGamePhase(GamePhase.LOBBY);
@@ -107,12 +108,14 @@ export const useSocket = () => {
       setGameState(gameStateData);
       setIsReconnecting(false);
       
-     // Player name should already be set from localStorage
-     // Just ensure it's consistent with the session
-     const savedPlayerName = localStorage.getItem('playerName');
-     if (savedPlayerName) {
-       setPlayerName(savedPlayerName);
-     }
+      // Restore player name from localStorage or from session data
+      const savedPlayerName = localStorage.getItem('playerName');
+      if (savedPlayerName) {
+        setPlayerName(savedPlayerName);
+      } else if (gameStateData.playerName) {
+        setPlayerName(gameStateData.playerName);
+        localStorage.setItem('playerName', gameStateData.playerName);
+      }
       
       if (gameStateData.gameEnded) {
         setGamePhase(GamePhase.ENDED);
