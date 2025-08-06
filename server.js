@@ -290,6 +290,110 @@ io.on('connection', (socket) => {
   
   socket.on('joinLobby', ({ playerName, sessionId }) => {
     
+    // Check if this session already exists and has an active game
+    const existingSession = playerSessions.get(sessionId);
+    if (existingSession && existingSession.gameId) {
+      const game = activeGames.get(existingSession.gameId);
+      if (game && !game.gameEnded) {
+        // Update socket references for existing session
+        existingSession.socketId = socket.id;
+        sessionsBySocket.set(socket.id, sessionId);
+        playerSockets.set(socket.id, socket);
+        
+        // Update player data in game
+        const playerEntry = Object.entries(game.players).find(([_, player]) => 
+          player.sessionId === sessionId
+        );
+        
+        if (playerEntry) {
+          const [playerId, playerData] = playerEntry;
+          // Update socket reference in game
+          game.players[playerId].socketId = socket.id;
+          
+          // Join game room
+          socket.join(existingSession.gameId);
+          
+          // Send current game state
+          const gameStateData = {
+            gameId: game.id,
+            players: Object.values(game.players).map(p => ({
+              ...p,
+              sessionId: p.sessionId
+            })),
+            currentTurn: game.currentTurn,
+            gameStarted: game.gameStarted,
+            gameEnded: game.gameEnded,
+            winner: game.winner,
+            gameNumber: game.gameNumber,
+            allGuesses: [
+              ...Object.values(game.players).flatMap(p => 
+                p.guesses?.map(g => ({ ...g, playerId: p.id })) || []
+              )
+            ].sort((a, b) => a.turn - b.turn),
+            potentialWinner: game.potentialWinner,
+            isDraw: game.isDraw
+          };
+          
+          if (game.gameEnded) {
+            socket.emit('gameFound', {
+              gameId: game.id,
+              sessionId: sessionId,
+              players: Object.values(game.players),
+              currentTurn: game.currentTurn
+            });
+            // Send game ended state after a brief delay
+            setTimeout(() => {
+              socket.emit('gameEnded', {
+                winner: game.winner,
+                isDraw: game.isDraw,
+                winnerNumber: game.winner ? Object.values(game.players).find(p => p.name !== game.winner)?.number : null,
+                players: Object.values(game.players).map(p => ({ 
+                  id: p.id, 
+                  name: p.name, 
+                  number: p.number,
+                  guesses: p.guesses,
+                  gamesWon: p.gamesWon,
+                  hasWon: p.hasWon || false
+                }))
+              });
+            }, 100);
+          } else if (game.gameStarted) {
+            socket.emit('gameFound', {
+              gameId: game.id,
+              sessionId: sessionId,
+              players: Object.values(game.players),
+              currentTurn: game.currentTurn
+            });
+            // Send game started state after a brief delay
+            setTimeout(() => {
+              socket.emit('gameStarted', {
+                currentTurn: game.currentTurn,
+                players: Object.values(game.players).map(p => ({ id: p.id, name: p.name, ready: p.ready }))
+              });
+            }, 100);
+          } else {
+            socket.emit('gameFound', {
+              gameId: game.id,
+              sessionId: sessionId,
+              players: Object.values(game.players),
+              currentTurn: game.currentTurn
+            });
+          }
+          
+          // Notify opponent that player rejoined
+          const opponentId = Object.keys(game.players).find(id => game.players[id].sessionId !== sessionId);
+          if (opponentId && playerSockets.has(game.players[opponentId].socketId)) {
+            socket.to(existingSession.gameId).emit('opponentReconnected', {
+              playerName: playerName
+            });
+          }
+          
+          console.log(`Player ${playerName} rejoined existing game ${existingSession.gameId}`);
+          return;
+        }
+      }
+    }
+    
     // Check if name is already in use by a different session
     const normalizedName = playerName.trim().toLowerCase();
     const isNameTaken = Array.from(usedNames.values()).includes(normalizedName);
