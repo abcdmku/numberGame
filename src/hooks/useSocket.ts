@@ -131,6 +131,8 @@ export const useSocket = () => {
     newSocket.on('opponentDisconnected', () => {
       setError('Your opponent has disconnected. Returning to lobby...');
       setTimeout(() => {
+        // Disconnect socket to trigger cleanup
+        newSocket.disconnect();
         setGamePhase(GamePhase.LOBBY);
         setGameState({
           gameId: null,

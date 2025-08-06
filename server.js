@@ -394,23 +394,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Player disconnected:', socket.id);
     
-    // Find and remove player's name from used names
-    const playerGames = Array.from(activeGames.values()).filter(game => 
-      game.players[socket.id]
-    );
-    
-    playerGames.forEach(game => {
-      const player = game.players[socket.id];
-      if (player && player.name) {
-        usedNames.delete(player.name.trim().toLowerCase());
-      }
-    });
-    
-    // Also check waiting players
-    const waitingPlayer = waitingPlayers.get(socket.id);
-    if (waitingPlayer && waitingPlayer.name) {
-      usedNames.delete(waitingPlayer.name.trim().toLowerCase());
-    }
+    // Clean up player name from used names
+    cleanupPlayerName(socket.id);
     
     // Remove from waiting players
     waitingPlayers.delete(socket.id);
@@ -425,6 +410,31 @@ io.on('connection', (socket) => {
     
     playerSockets.delete(socket.id);
   });
+  
+  // Helper function to clean up player names
+  function cleanupPlayerName(socketId) {
+    // Check active games
+    const playerGames = Array.from(activeGames.values()).filter(game => 
+      game.players[socketId]
+    );
+    
+    playerGames.forEach(game => {
+      const player = game.players[socketId];
+      if (player && player.name) {
+        const normalizedName = player.name.trim().toLowerCase();
+        usedNames.delete(normalizedName);
+        console.log(`Removed name "${player.name}" from used names (game disconnect)`);
+      }
+    });
+    
+    // Check waiting players
+    const waitingPlayer = waitingPlayers.get(socketId);
+    if (waitingPlayer && waitingPlayer.name) {
+      const normalizedName = waitingPlayer.name.trim().toLowerCase();
+      usedNames.delete(normalizedName);
+      console.log(`Removed name "${waitingPlayer.name}" from used names (waiting disconnect)`);
+    }
+  }
   
   socket.on('requestRematch', ({ gameId }) => {
     const game = activeGames.get(gameId);

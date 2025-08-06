@@ -44,6 +44,10 @@ function App() {
 
   const confirmReturnToLobby = () => {
     setShowReturnConfirm(false);
+    // Disconnect the socket to trigger cleanup on server
+    if (socket) {
+      socket.disconnect();
+    }
     window.location.reload();
   };
 
