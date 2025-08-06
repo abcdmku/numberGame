@@ -112,12 +112,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           <div className="flex items-center justify-center gap-4 text-blue-100">
             <div className="flex items-center gap-2">
               <Trophy className="w-4 h-4" />
-              <span>{me?.name}: {me?.gamesWon || 0} wins</span>
+              <span>{me?.name}: {me?.gamesWon ?? 0} wins</span>
             </div>
             <div className="w-px h-4 bg-blue-400"></div>
             <div className="flex items-center gap-2">
               <Trophy className="w-4 h-4" />
-              <span>{opponent?.name}: {opponent?.gamesWon || 0} wins</span>
+              <span>{opponent?.name}: {opponent?.gamesWon ?? 0} wins</span>
             </div>
           </div>
         </div>

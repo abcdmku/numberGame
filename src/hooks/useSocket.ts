@@ -54,7 +54,10 @@ export const useSocket = () => {
       setGameState(prev => ({
         ...prev,
         currentTurn: data.currentTurn,
-        players: data.players,
+        players: data.players.map((p: any) => ({
+          ...prev.players.find(pp => pp.id === p.id),
+          ...p
+        })),
         gameStarted: true
       }));
       setGamePhase(GamePhase.PLAYING);
@@ -101,7 +104,10 @@ export const useSocket = () => {
         winner: null,
         allGuesses: [],
         gameNumber: data.gameNumber,
-        players: data.players,
+        players: data.players.map((p: any) => ({
+          ...prev.players.find(pp => pp.id === p.id),
+          ...p
+        })),
         potentialWinner: null
       }));
       setGamePhase(GamePhase.SETUP);
