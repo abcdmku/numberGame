@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"node server.js\" \"vite --host\"",
+    "dev": "concurrently \"node server.js\" \"wait-on tcp:3001 && vite --host\"",
     "server": "node server.js",
     "client": "vite",
     "build": "node scripts/update-version.js && vite build",
