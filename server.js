@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,13 +17,29 @@ const io = new Server(server, {
   }
 });
 
-// Serve static files from the dist directory
-app.use(express.static(path.join(__dirname, 'dist')));
+// Check if we're in production (dist folder exists) or development
+const distPath = path.join(__dirname, 'dist');
+const isProduction = fs.existsSync(distPath);
 
-// Handle React routing, return all requests to React app
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
+if (isProduction) {
+  // Production: serve built files
+  app.use(express.static(distPath));
+  
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+} else {
+  // Development: just serve API endpoints, let Vite handle the frontend
+  app.get('/', (req, res) => {
+    res.json({ 
+      message: 'Number Master Game Server', 
+      status: 'running',
+      mode: 'development',
+      note: 'Frontend served by Vite dev server'
+    });
+  });
+}
 
 // Game state management
 const waitingPlayers = new Map();
