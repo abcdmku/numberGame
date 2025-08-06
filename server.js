@@ -288,8 +288,7 @@ io.on('connection', (socket) => {
     console.log(`Player ${session.playerName} reconnected to game ${session.gameId}`);
   });
   
-  socket.on('joinLobby', (playerName) => {
-    const { playerName, sessionId } = playerName;
+  socket.on('joinLobby', ({ playerName, sessionId }) => {
     
     // Check if name is already in use by a different session
     const normalizedName = playerName.trim().toLowerCase();
