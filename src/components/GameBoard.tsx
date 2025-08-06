@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Send, History, Trophy, Target, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 import { Player, GuessData } from '../types/game';
+import { VersionDisplay } from './VersionDisplay';
 
 interface GameBoardProps {
   players: Player[];
@@ -342,6 +343,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           </div>
         </div>
       </div>
+      <VersionDisplay />
     </div>
   );
 };

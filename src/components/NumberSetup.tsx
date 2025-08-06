@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Shuffle, Check, Users, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { Player } from '../types/game';
+import { VersionDisplay } from './VersionDisplay';
 
 interface NumberSetupProps {
   players: Player[];
@@ -177,6 +178,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
           </div>
         </div>
       </div>
+      <VersionDisplay />
     </div>
   );
 };

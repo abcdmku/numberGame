@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Users, Gamepad2 } from 'lucide-react';
+import { VersionDisplay } from './VersionDisplay';
 
 interface LobbyProps {
   onJoin: (name: string) => void;
@@ -71,6 +72,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
           </div>
         </div>
       </div>
+      <VersionDisplay />
     </div>
   );
 };

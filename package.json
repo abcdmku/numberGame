@@ -7,7 +7,7 @@
     "dev": "concurrently \"node server.js\" \"vite --host\"",
     "server": "node server.js",
     "client": "vite",
-    "build": "vite build",
+    "build": "node scripts/update-version.js && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

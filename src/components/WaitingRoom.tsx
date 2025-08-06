@@ -1,5 +1,6 @@
 import React from 'react';
 import { Loader2, Wifi } from 'lucide-react';
+import { VersionDisplay } from './VersionDisplay';
 
 interface WaitingRoomProps {
   playerName: string;
@@ -37,6 +38,7 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({ playerName }) => {
           </div>
         </div>
       </div>
+      <VersionDisplay />
     </div>
   );
 };

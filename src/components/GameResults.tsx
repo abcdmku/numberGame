@@ -1,6 +1,7 @@
 import React from 'react';
 import { Trophy, Home, Crown, Users, Clock, Check, X, History } from 'lucide-react';
 import { Player } from '../types/game';
+import { VersionDisplay } from './VersionDisplay';
 
 interface GameResultsProps {
   winner: string;
@@ -343,6 +344,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
         </div>
 
       </div>
+      <VersionDisplay />
     </div>
   );
 };
