@@ -47,7 +47,8 @@ const activeGames = new Map();
 const playerSockets = new Map();
 const usedNames = new Map(); // Map socketId -> normalizedName for easier cleanup
 const playerSessions = new Map(); // Map sessionId -> { playerId, gameId, playerName }
-const gamesByPlayer = new Map(); // Map playerId -> gameId for quick lookup
+const sessionsBySocket = new Map(); // Map socketId -> sessionId for quick lookup
+const disconnectedPlayers = new Map(); // Map sessionId -> { disconnectTime, gameId, playerData }
 
 // Utility functions
 function generateSessionId() {
