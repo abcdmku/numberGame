@@ -150,13 +150,12 @@ function createGame(player1, player2) {
         sessionId: player1SessionId,
         number: null,
         ready: false,
-const sessionsBySocket = new Map(); // Map socketId -> sessionId for quick lookup
-const disconnectedPlayers = new Map(); // Map sessionId -> { disconnectTime, gameId, playerData }
         guesses: [],
         gamesWon: 0
       },
       [player2.id]: {
         ...player2,
+        sessionId: player2SessionId,
         number: null,
         ready: false,
         guesses: [],
