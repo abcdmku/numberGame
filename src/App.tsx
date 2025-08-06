@@ -37,18 +37,21 @@ function App() {
       if (playerName) {
         joinLobby(playerName);
       } else {
-        window.location.reload();
+        // Reset to lobby state instead of reloading
+        setGamePhase(GamePhase.LOBBY);
       }
     }
   };
 
   const confirmReturnToLobby = () => {
     setShowReturnConfirm(false);
-    // Disconnect the socket to trigger cleanup on server
-    if (socket) {
-      socket.disconnect();
+    // Reset all state and return to lobby
+    if (gameState.gameId) {
+      // Only disconnect if we're in an active game
+      socket?.disconnect();
     }
-    window.location.reload();
+    // Reset to lobby state instead of reloading
+    setGamePhase(GamePhase.LOBBY);
   };
 
   const cancelReturn = () => {

@@ -131,22 +131,8 @@ export const useSocket = () => {
     newSocket.on('opponentDisconnected', () => {
       setError('Your opponent has disconnected. Returning to lobby...');
       setTimeout(() => {
-        // Disconnect socket to trigger cleanup
-        newSocket.disconnect();
-        setGamePhase(GamePhase.LOBBY);
-        setGameState({
-          gameId: null,
-          players: [],
-          currentTurn: null,
-          gameStarted: false,
-          gameEnded: false,
-          winner: null,
-          allGuesses: [],
-          gameNumber: 1
-        });
-        setMyNumber('');
-        setError('');
-        setRematchState({ requested: false, opponentRequested: false });
+        // Reset to initial state
+        resetToLobby();
       }, 3000);
     });
 
@@ -167,6 +153,24 @@ export const useSocket = () => {
       newSocket.close();
     };
   }, []);
+
+  const resetToLobby = () => {
+    setGamePhase(GamePhase.LOBBY);
+    setGameState({
+      gameId: null,
+      players: [],
+      currentTurn: null,
+      gameStarted: false,
+      gameEnded: false,
+      winner: null,
+      allGuesses: [],
+      gameNumber: 1
+    });
+    setPlayerName('');
+    setMyNumber('');
+    setError('');
+    setRematchState({ requested: false, opponentRequested: false });
+  };
 
   const joinLobby = (name: string) => {
     if (socket && name.trim()) {
