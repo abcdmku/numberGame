@@ -219,7 +219,20 @@ io.on('connection', (socket) => {
       // Update session playerId
       session.playerId = socket.id;
     } else {
-      game.players[session.playerId].socketId = socket.id;
+      // Player data might be under a different key, try to find and update
+      const playerEntry = Object.entries(game.players).find(([_, player]) => 
+        player.sessionId === sessionId
+      );
+      
+      if (playerEntry) {
+        const [playerId, playerData] = playerEntry;
+        game.players[playerId].socketId = socket.id;
+        session.playerId = playerId;
+      } else {
+        console.log(`Could not find player data for session ${sessionId} in game ${session.gameId}`);
+        socket.emit('sessionNotFound');
+        return;
+      }
     }
     
     // Clean up old socket references
