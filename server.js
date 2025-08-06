@@ -181,7 +181,9 @@ io.on('connection', (socket) => {
   console.log('Player connected:', socket.id);
   
   socket.on('reconnectToSession', (sessionId) => {
+    const { sessionId, playerName } = data;
     const session = playerSessions.get(sessionId);
+    
     if (!session) {
       socket.emit('sessionNotFound');
       return;
@@ -249,9 +251,8 @@ io.on('connection', (socket) => {
     socket.join(session.gameId);
     
     // Send current game state
-    const gameState = {
+    const gameStateData = {
       gameId: game.id,
-      playerName: session.playerName,
       players: Object.values(game.players).map(p => ({
         ...p,
         sessionId: p.sessionId
@@ -270,7 +271,11 @@ io.on('connection', (socket) => {
       isDraw: game.isDraw
     };
     
-    socket.emit('sessionReconnected', gameState);
+    socket.emit('sessionReconnected', {
+      sessionId: sessionId,
+      playerName: session.playerName,
+      gameState: gameStateData
+    });
     
     // Notify opponent that player reconnected
     const opponentId = Object.keys(game.players).find(id => id !== socket.id);
@@ -284,7 +289,9 @@ io.on('connection', (socket) => {
   });
   
   socket.on('joinLobby', (playerName) => {
-    // Check if name is already in use
+    const { playerName, sessionId } = data;
+    
+    // Check if name is already in use by a different session
     const normalizedName = playerName.trim().toLowerCase();
     const isNameTaken = Array.from(usedNames.values()).includes(normalizedName);
     if (isNameTaken) {
@@ -301,8 +308,7 @@ io.on('connection', (socket) => {
     playerSockets.set(socket.id, socket);
     usedNames.set(socket.id, normalizedName);
     
-    // Create session for this player
-    const sessionId = generateSessionId();
+    // Create or update session for this player
     const session = {
       playerId: socket.id,
       gameId: null,
@@ -323,8 +329,8 @@ io.on('connection', (socket) => {
       const game = createGame(waitingPlayer, player);
       
       // Update sessions with game ID
-      const waitingSession = Array.from(playerSessions.values()).find(s => s.playerId === waitingPlayer.id);
-      const playerSession = Array.from(playerSessions.values()).find(s => s.playerId === player.id);
+      const waitingSession = playerSessions.get(waitingPlayer.sessionId);
+      const playerSession = playerSessions.get(sessionId);
       if (waitingSession) waitingSession.gameId = game.id;
       if (playerSession) playerSession.gameId = game.id;
       

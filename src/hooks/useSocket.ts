@@ -5,7 +5,11 @@ import { GameState, Player, GuessData, GamePhase } from '../types/game';
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(() => {
+    // Generate a unique session ID for this browser tab/window
+    const existingSessionId = sessionStorage.getItem('gameSessionId');
+    return existingSessionId || `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  });
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [gameState, setGameState] = useState<GameState>({
     gameId: null,
@@ -28,24 +32,29 @@ export const useSocket = () => {
   const [opponentStatus, setOpponentStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected');
 
   useEffect(() => {
-    // Check for existing session in localStorage
-    const savedSessionId = localStorage.getItem('gameSessionId');
-    const savedPlayerName = localStorage.getItem('playerName');
-    if (savedSessionId) {
-      setSessionId(savedSessionId);
-      if (savedPlayerName) {
-        setPlayerName(savedPlayerName);
-      }
+    // Check for existing session in sessionStorage (per tab)
+    const savedSessionId = sessionStorage.getItem('gameSessionId');
+    const savedPlayerName = sessionStorage.getItem('playerName');
+    const savedGameState = sessionStorage.getItem('gameState');
+    
+    if (savedSessionId && savedPlayerName && savedGameState) {
       setIsReconnecting(true);
+      setPlayerName(savedPlayerName);
+      try {
+        const parsedGameState = JSON.parse(savedGameState);
+        setGameState(parsedGameState);
+      } catch (e) {
+        console.error('Failed to parse saved game state:', e);
+      }
     }
     
     const newSocket = io();
     setSocket(newSocket);
     socketRef.current = newSocket;
 
-    // Try to reconnect to existing session first
-    if (savedSessionId) {
-      newSocket.emit('reconnectToSession', savedSessionId);
+    // Try to reconnect to existing session
+    if (savedSessionId && savedPlayerName) {
+      newSocket.emit('reconnectToSession', { sessionId: savedSessionId, playerName: savedPlayerName });
     }
 
     setupSocketListeners(newSocket);
@@ -57,8 +66,10 @@ export const useSocket = () => {
   }, []);
 
   const resetToLobby = () => {
-    // Clear session
-    localStorage.removeItem('gameSessionId');
+    // Clear session storage for this tab
+    sessionStorage.removeItem('gameSessionId');
+    sessionStorage.removeItem('playerName');
+    sessionStorage.removeItem('gameState');
     setSessionId(null);
     setIsReconnecting(false);
     setOpponentStatus('connected');
@@ -97,29 +108,27 @@ export const useSocket = () => {
 
   const setupSocketListeners = (socketInstance: Socket) => {
     socketInstance.on('sessionNotFound', () => {
-      localStorage.removeItem('gameSessionId');
-      localStorage.removeItem('playerName');
+      sessionStorage.removeItem('gameSessionId');
+      sessionStorage.removeItem('playerName');
+      sessionStorage.removeItem('gameState');
       setSessionId(null);
       setIsReconnecting(false);
       setGamePhase(GamePhase.LOBBY);
     });
     
-    socketInstance.on('sessionReconnected', (gameStateData) => {
-      setGameState(gameStateData);
+    socketInstance.on('sessionReconnected', (data) => {
+      setGameState(data.gameState);
       setIsReconnecting(false);
       
-      // Restore player name from localStorage or from session data
-      const savedPlayerName = localStorage.getItem('playerName');
-      if (savedPlayerName) {
-        setPlayerName(savedPlayerName);
-      } else if (gameStateData.playerName) {
-        setPlayerName(gameStateData.playerName);
-        localStorage.setItem('playerName', gameStateData.playerName);
-      }
+      // Restore player name
+      setPlayerName(data.playerName);
+      sessionStorage.setItem('playerName', data.playerName);
+      sessionStorage.setItem('gameSessionId', data.sessionId);
+      sessionStorage.setItem('gameState', JSON.stringify(data.gameState));
       
-      if (gameStateData.gameEnded) {
+      if (data.gameState.gameEnded) {
         setGamePhase(GamePhase.ENDED);
-      } else if (gameStateData.gameStarted) {
+      } else if (data.gameState.gameStarted) {
         setGamePhase(GamePhase.PLAYING);
       } else {
         setGamePhase(GamePhase.SETUP);
@@ -132,7 +141,7 @@ export const useSocket = () => {
     socketInstance.on('waitingForPlayer', (data) => {
       if (data?.sessionId) {
         setSessionId(data.sessionId);
-        localStorage.setItem('gameSessionId', data.sessionId);
+        sessionStorage.setItem('gameSessionId', data.sessionId);
       }
       setGamePhase(GamePhase.WAITING);
       setError('');
@@ -141,7 +150,7 @@ export const useSocket = () => {
     socketInstance.on('gameFound', (data) => {
       if (data.sessionId) {
         setSessionId(data.sessionId);
-        localStorage.setItem('gameSessionId', data.sessionId);
+        sessionStorage.setItem('gameSessionId', data.sessionId);
       }
       setGameState(prev => ({
         ...prev,
@@ -150,6 +159,7 @@ export const useSocket = () => {
         currentTurn: data.currentTurn
       }));
       setGamePhase(GamePhase.SETUP);
+      sessionStorage.setItem('gameState', JSON.stringify(gameState));
       setError('');
     });
 
@@ -176,6 +186,7 @@ export const useSocket = () => {
         gameStarted: true
       }));
       setGamePhase(GamePhase.PLAYING);
+      sessionStorage.setItem('gameState', JSON.stringify(gameState));
       setError('');
     });
 
@@ -208,6 +219,7 @@ export const useSocket = () => {
         }))
       }));
       setGamePhase(GamePhase.ENDED);
+      sessionStorage.setItem('gameState', JSON.stringify(gameState));
     });
 
     socketInstance.on('newGameStarted', (data) => {
@@ -258,7 +270,7 @@ export const useSocket = () => {
     socketInstance.on('opponentDisconnectedWaiting', (data) => {
       if (data?.sessionId) {
         setSessionId(data.sessionId);
-        localStorage.setItem('gameSessionId', data.sessionId);
+        sessionStorage.setItem('gameSessionId', data.sessionId);
       }
       setOpponentStatus('disconnected');
       setError('Your opponent disconnected. Waiting for them to reconnect or for a new opponent...');
@@ -286,15 +298,15 @@ export const useSocket = () => {
   };
 
   const joinLobby = (name: string) => {
-    // Clear any existing session when joining lobby fresh
-    localStorage.removeItem('gameSessionId');
-    localStorage.removeItem('playerName');
-    setSessionId(null);
+    // Generate new session ID for this game instance
+    const newSessionId = `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    setSessionId(newSessionId);
     
     if (socketRef.current && name.trim()) {
       setPlayerName(name.trim());
-      localStorage.setItem('playerName', name.trim());
-      socketRef.current.emit('joinLobby', name.trim());
+      sessionStorage.setItem('playerName', name.trim());
+      sessionStorage.setItem('gameSessionId', newSessionId);
+      socketRef.current.emit('joinLobby', { playerName: name.trim(), sessionId: newSessionId });
     }
   };
 
