@@ -77,8 +77,8 @@ export const GameResults: React.FC<GameResultsProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-3xl p-6 md:p-8 w-full md:max-w-2xl shadow-2xl border-0 md:border border-white/20 text-center min-h-screen md:min-h-0 flex flex-col justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 md:flex md:items-center md:justify-center p-4">
+      <div className="bg-transparent md:bg-white/10 md:backdrop-blur-md rounded-none md:rounded-3xl p-6 md:p-8 w-full md:max-w-2xl md:shadow-2xl border-0 md:border md:border-white/20 text-center min-h-screen md:min-h-0 flex flex-col justify-center">
         <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${
           isWinner 
             ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
