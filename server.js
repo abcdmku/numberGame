@@ -289,7 +289,7 @@ io.on('connection', (socket) => {
   });
   
   socket.on('joinLobby', (playerName) => {
-    const { playerName, sessionId } = data;
+    const { playerName, sessionId } = playerName;
     
     // Check if name is already in use by a different session
     const normalizedName = playerName.trim().toLowerCase();
