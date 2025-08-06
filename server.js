@@ -196,29 +196,29 @@ io.on('connection', (socket) => {
     // Update socket references
     const oldSocketId = session.socketId;
     session.socketId = socket.id;
-   session.playerId = socket.id; // Update playerId to new socket.id
+    session.playerId = socket.id; // Update playerId to new socket.id
     sessionsBySocket.set(socket.id, sessionId);
     playerSockets.set(socket.id, socket);
     
     // Update game player socket reference
     if (game.players[session.playerId]) {
-     // Move player data to new socket id
-     const playerData = game.players[session.playerId];
-     delete game.players[session.playerId];
-     game.players[socket.id] = {
-       ...playerData,
-       id: socket.id,
-       socketId: socket.id
-     };
-     
-     // Update current turn if it was the old socket id
-     if (game.currentTurn === session.playerId) {
-       game.currentTurn = socket.id;
-     }
-     
-     // Update session playerId
-     session.playerId = socket.id;
-   } else {
+      // Move player data to new socket id
+      const playerData = game.players[session.playerId];
+      delete game.players[session.playerId];
+      game.players[socket.id] = {
+        ...playerData,
+        id: socket.id,
+        socketId: socket.id
+      };
+      
+      // Update current turn if it was the old socket id
+      if (game.currentTurn === session.playerId) {
+        game.currentTurn = socket.id;
+      }
+      
+      // Update session playerId
+      session.playerId = socket.id;
+    } else {
       game.players[session.playerId].socketId = socket.id;
     }
     
@@ -259,7 +259,7 @@ io.on('connection', (socket) => {
     socket.emit('sessionReconnected', gameState);
     
     // Notify opponent that player reconnected
-   const opponentId = Object.keys(game.players).find(id => id !== socket.id);
+    const opponentId = Object.keys(game.players).find(id => id !== socket.id);
     if (opponentId && playerSockets.has(game.players[opponentId].socketId)) {
       socket.to(session.gameId).emit('opponentReconnected', {
         playerName: session.playerName
@@ -550,8 +550,8 @@ io.on('connection', (socket) => {
         disconnectedPlayers.set(sessionId, {
           disconnectTime: Date.now(),
           gameId: session.gameId,
-         playerData: game.players[session.playerId],
-         originalPlayerId: session.playerId
+          playerData: game.players[session.playerId],
+          originalPlayerId: session.playerId
         });
         
         // Notify opponent
@@ -567,21 +567,14 @@ io.on('connection', (socket) => {
       } else {
         // Game ended, clean up completely
         playerSessions.delete(sessionId);
-   if (game.players[oldPlayerId]) {
-     // Move player data to new socket id
-     const playerData = game.players[oldPlayerId];
-     delete game.players[oldPlayerId];
-     game.players[socket.id] = {
-       ...playerData,
-       id: socket.id,
-       socketId: socket.id
-     };
-     
-     // Update current turn if it was the old socket id
-     if (game.currentTurn === oldPlayerId) {
-       game.currentTurn = socket.id;
-     }
-   }
+      }
+    } else {
+      // Player was waiting or not in a game
+      waitingPlayers.delete(socket.id);
+      if (sessionId) {
+        playerSessions.delete(sessionId);
+      }
+    }
     
     // Clean up socket references
     cleanupPlayerName(socket.id);
@@ -661,5 +654,3 @@ const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-   const opponentId = Object.keys(game.players).find(id => id !== socket.id);
-   if (opponentId && playerSockets.has(opponentId)) {
