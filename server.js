@@ -45,7 +45,7 @@ if (isProduction) {
 const waitingPlayers = new Map();
 const activeGames = new Map();
 const playerSockets = new Map();
-const usedNames = new Set();
+const usedNames = new Map(); // Map socketId -> normalizedName for easier cleanup
 
 // Utility functions
 function generateRandomNumber() {
@@ -155,7 +155,8 @@ io.on('connection', (socket) => {
   socket.on('joinLobby', (playerName) => {
     // Check if name is already in use
     const normalizedName = playerName.trim().toLowerCase();
-    if (usedNames.has(normalizedName)) {
+    const isNameTaken = Array.from(usedNames.values()).includes(normalizedName);
+    if (isNameTaken) {
       socket.emit('nameError', 'This name is already in use. Please choose a different name.');
       return;
     }
@@ -167,7 +168,8 @@ io.on('connection', (socket) => {
     };
     
     playerSockets.set(socket.id, socket);
-    usedNames.add(normalizedName);
+    usedNames.set(socket.id, normalizedName);
+    console.log(`Player "${playerName}" (${socket.id}) joined. Used names:`, Array.from(usedNames.values()));
     
     // Check if there's a waiting player
     if (waitingPlayers.size > 0) {
@@ -394,11 +396,20 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('Player disconnected:', socket.id);
     
-    // Clean up player name from used names
-    cleanupPlayerName(socket.id);
+    // Clean up player name
+    if (usedNames.has(socket.id)) {
+      const playerName = usedNames.get(socket.id);
+      usedNames.delete(socket.id);
+      console.log(`Removed name "${playerName}" for disconnected player ${socket.id}`);
+    }
     
     // Remove from waiting players
     waitingPlayers.delete(socket.id);
+    
+    // Clean up active games
+    const playerGames = Array.from(activeGames.values()).filter(game => 
+      game.players[socket.id]
+    );
     
     playerGames.forEach(game => {
       const opponentId = Object.keys(game.players).find(id => id !== socket.id);
@@ -410,31 +421,6 @@ io.on('connection', (socket) => {
     
     playerSockets.delete(socket.id);
   });
-  
-  // Helper function to clean up player names
-  function cleanupPlayerName(socketId) {
-    // Check active games
-    const playerGames = Array.from(activeGames.values()).filter(game => 
-      game.players[socketId]
-    );
-    
-    playerGames.forEach(game => {
-      const player = game.players[socketId];
-      if (player && player.name) {
-        const normalizedName = player.name.trim().toLowerCase();
-        usedNames.delete(normalizedName);
-        console.log(`Removed name "${player.name}" from used names (game disconnect)`);
-      }
-    });
-    
-    // Check waiting players
-    const waitingPlayer = waitingPlayers.get(socketId);
-    if (waitingPlayer && waitingPlayer.name) {
-      const normalizedName = waitingPlayer.name.trim().toLowerCase();
-      usedNames.delete(normalizedName);
-      console.log(`Removed name "${waitingPlayer.name}" from used names (waiting disconnect)`);
-    }
-  }
   
   socket.on('requestRematch', ({ gameId }) => {
     const game = activeGames.get(gameId);
