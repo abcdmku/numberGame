@@ -30,8 +30,12 @@ export const useSocket = () => {
   useEffect(() => {
     // Check for existing session in localStorage
     const savedSessionId = localStorage.getItem('gameSessionId');
+    const savedPlayerName = localStorage.getItem('playerName');
     if (savedSessionId) {
       setSessionId(savedSessionId);
+      if (savedPlayerName) {
+        setPlayerName(savedPlayerName);
+      }
       setIsReconnecting(true);
     }
     
@@ -102,6 +106,13 @@ export const useSocket = () => {
     socketInstance.on('sessionReconnected', (gameStateData) => {
       setGameState(gameStateData);
       setIsReconnecting(false);
+      
+      // Set player name from reconnected session
+      const myPlayer = gameStateData.players.find((p: any) => p.sessionId === sessionId);
+      if (myPlayer) {
+        setPlayerName(myPlayer.name);
+        localStorage.setItem('playerName', myPlayer.name);
+      }
       
       if (gameStateData.gameEnded) {
         setGamePhase(GamePhase.ENDED);
@@ -274,10 +285,12 @@ export const useSocket = () => {
   const joinLobby = (name: string) => {
     // Clear any existing session when joining lobby fresh
     localStorage.removeItem('gameSessionId');
+    localStorage.removeItem('playerName');
     setSessionId(null);
     
     if (socketRef.current && name.trim()) {
       setPlayerName(name.trim());
+      localStorage.setItem('playerName', name.trim());
       socketRef.current.emit('joinLobby', name.trim());
     }
   };

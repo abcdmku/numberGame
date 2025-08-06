@@ -220,7 +220,10 @@ io.on('connection', (socket) => {
     // Send current game state
     const gameState = {
       gameId: game.id,
-      players: Object.values(game.players),
+      players: Object.values(game.players).map(p => ({
+        ...p,
+        sessionId: p.sessionId
+      })),
       currentTurn: game.currentTurn,
       gameStarted: game.gameStarted,
       gameEnded: game.gameEnded,
