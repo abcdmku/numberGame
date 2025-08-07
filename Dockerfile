@@ -25,4 +25,4 @@ RUN npm prune --omit=dev
 EXPOSE 3001
 
 # Start the server
-CMD ["node", "server.js"]
+CMD ["node", "server.ts"]
