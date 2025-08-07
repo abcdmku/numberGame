@@ -94,15 +94,15 @@ function createGameStateData(game: Game): GameStateData {
 
 // Helper function to handle game reconnection
 function handleGameReconnection(socket: any, session: PlayerSession, game: Game) {
+  // CRITICAL: Join the game room first so messages are broadcast properly
+  socket.join(session.gameId);
+  
   // Join game room
   socket.join(session.gameId);
   
   // Update player socket reference in the game
   const player = game.players[session.playerId];
   if (player) {
-    player.socketId = socket.id;
-  }
-  
   // Send current game state
   const gameStateData = createGameStateData(game);
   
@@ -115,7 +115,7 @@ function handleGameReconnection(socket: any, session: PlayerSession, game: Game)
   // Notify opponent that player reconnected
   const opponentId = Object.keys(game.players).find(id => id !== session.playerId);
   if (opponentId) {
-    socket.to(session.gameId).emit('opponentReconnected', {
+    socket.to(session.gameId!).emit('opponentReconnected', {
       playerName: session.playerName
     });
   }
@@ -174,6 +174,11 @@ io.on('connection', (socket) => {
     updateSessionSocket(session, socket.id, sessionsBySocket);
     playerSockets.set(socket.id, socket);
     
+    // CRITICAL: Join the game room immediately
+    if (session.gameId) {
+      socket.join(session.gameId);
+    }
+    
     // Update game player references
     const updatedPlayerId = updateGamePlayerReferences(game, sessionId, socket.id);
     if (updatedPlayerId) {
@@ -195,6 +200,9 @@ io.on('connection', (socket) => {
         // Update socket references for existing session
         updateSessionSocket(existingSession, socket.id, sessionsBySocket);
         playerSockets.set(socket.id, socket);
+        
+        // CRITICAL: Join the game room immediately
+        socket.join(existingSession.gameId);
         
         // Update player data in game
         const updatedPlayerId = updateGamePlayerReferences(game, sessionId, socket.id);
@@ -281,15 +289,19 @@ io.on('connection', (socket) => {
   
   socket.on('setNumber', ({ gameId, number }) => {
     const game = activeGames.get(gameId);
-    if (!game || !game.players[socket.id]) return;
+    if (!game) return;
+    
+    // Find player by socket ID in the game
+    const player = Object.values(game.players).find(p => p.socketId === socket.id);
+    if (!player) return;
     
     if (!validateNumber(number)) {
       socket.emit('numberError', 'Invalid number. Must be 5 digits with no repeats.');
       return;
     }
     
-    game.players[socket.id].number = number;
-    game.players[socket.id].ready = true;
+    player.number = number;
+    player.ready = true;
     
     // Check if both players are ready
     const allReady = Object.values(game.players).every(player => player.ready);
@@ -302,7 +314,7 @@ io.on('connection', (socket) => {
       });
     } else {
       io.to(gameId).emit('playerReady', {
-        playerId: socket.id,
+        playerId: player.id,
         players: Object.values(game.players).map(p => ({ id: p.id, name: p.name, ready: p.ready }))
       });
     }
@@ -311,7 +323,10 @@ io.on('connection', (socket) => {
   socket.on('makeGuess', ({ gameId, guess }) => {
     const game = activeGames.get(gameId);
     if (!game || !game.gameStarted || game.gameEnded) return;
-    if (game.currentTurn !== socket.id) return;
+    
+    // Find current player by socket ID
+    const currentPlayer = Object.values(game.players).find(p => p.socketId === socket.id);
+    if (!currentPlayer || game.currentTurn !== currentPlayer.id) return;
     
     if (!validateNumber(guess)) {
       socket.emit('guessError', 'Invalid guess. Must be 5 digits with no repeats.');
@@ -319,9 +334,8 @@ io.on('connection', (socket) => {
     }
     
     // Find opponent
-    const opponentId = Object.keys(game.players).find(id => id !== socket.id)!;
+    const opponentId = Object.keys(game.players).find(id => id !== currentPlayer.id)!;
     const opponent = game.players[opponentId];
-    const currentPlayer = game.players[socket.id];
     
     // Calculate feedback
     const feedback = calculateFeedback(guess, opponent.number!);
@@ -341,7 +355,7 @@ io.on('connection', (socket) => {
     
     if (isWin) {
       // Mark this player as having won
-      game.players[socket.id].hasWon = true;
+      currentPlayer.hasWon = true;
       
       // Check if opponent has already made their guess this round
       const opponentHasGuessed = opponent.guesses.length >= currentPlayer.guesses.length;
@@ -351,23 +365,23 @@ io.on('connection', (socket) => {
         if (opponent.hasWon) {
           handleGameEnd(game, null, true); // Draw
         } else {
-          handleGameEnd(game, socket.id); // Current player wins
+          handleGameEnd(game, currentPlayer.id); // Current player wins
         }
       } else {
         // Give opponent a chance to guess
-        game.potentialWinner = socket.id;
+        game.potentialWinner = currentPlayer.id;
         game.currentTurn = opponentId;
         
         io.to(gameId).emit('playerWonButGameContinues', {
           winnerName: currentPlayer.name,
-          winnerId: socket.id,
+          winnerId: currentPlayer.id,
           currentTurn: game.currentTurn,
           allGuesses: getAllGuessesSorted(game)
         });
       }
     } else {
       // Check if opponent has already won
-      if (game.potentialWinner && game.potentialWinner !== socket.id) {
+      if (game.potentialWinner && game.potentialWinner !== currentPlayer.id) {
         handleGameEnd(game, game.potentialWinner);
       } else {
         // Switch turns
