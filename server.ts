@@ -121,6 +121,7 @@ function handleGameReconnection(socket: any, session: PlayerSession, game: Game)
   }
   
   console.log(`Player ${session.playerName} reconnected to game ${session.gameId}`);
+  }
 }
 
 // Helper function to handle game end
@@ -200,9 +201,6 @@ io.on('connection', (socket) => {
         // Update socket references for existing session
         updateSessionSocket(existingSession, socket.id, sessionsBySocket);
         playerSockets.set(socket.id, socket);
-        
-        // CRITICAL: Join the game room immediately
-        socket.join(existingSession.gameId);
         
         // Update player data in game
         const updatedPlayerId = updateGamePlayerReferences(game, sessionId, socket.id);
@@ -289,19 +287,15 @@ io.on('connection', (socket) => {
   
   socket.on('setNumber', ({ gameId, number }) => {
     const game = activeGames.get(gameId);
-    if (!game) return;
-    
-    // Find player by socket ID in the game
-    const player = Object.values(game.players).find(p => p.socketId === socket.id);
-    if (!player) return;
+    if (!game || !game.players[socket.id]) return;
     
     if (!validateNumber(number)) {
       socket.emit('numberError', 'Invalid number. Must be 5 digits with no repeats.');
       return;
     }
     
-    player.number = number;
-    player.ready = true;
+    game.players[socket.id].number = number;
+    game.players[socket.id].ready = true;
     
     // Check if both players are ready
     const allReady = Object.values(game.players).every(player => player.ready);
@@ -314,7 +308,7 @@ io.on('connection', (socket) => {
       });
     } else {
       io.to(gameId).emit('playerReady', {
-        playerId: player.id,
+        playerId: socket.id,
         players: Object.values(game.players).map(p => ({ id: p.id, name: p.name, ready: p.ready }))
       });
     }
@@ -323,10 +317,7 @@ io.on('connection', (socket) => {
   socket.on('makeGuess', ({ gameId, guess }) => {
     const game = activeGames.get(gameId);
     if (!game || !game.gameStarted || game.gameEnded) return;
-    
-    // Find current player by socket ID
-    const currentPlayer = Object.values(game.players).find(p => p.socketId === socket.id);
-    if (!currentPlayer || game.currentTurn !== currentPlayer.id) return;
+    if (game.currentTurn !== socket.id) return;
     
     if (!validateNumber(guess)) {
       socket.emit('guessError', 'Invalid guess. Must be 5 digits with no repeats.');
@@ -334,8 +325,9 @@ io.on('connection', (socket) => {
     }
     
     // Find opponent
-    const opponentId = Object.keys(game.players).find(id => id !== currentPlayer.id)!;
+    const opponentId = Object.keys(game.players).find(id => id !== socket.id)!;
     const opponent = game.players[opponentId];
+    const currentPlayer = game.players[socket.id];
     
     // Calculate feedback
     const feedback = calculateFeedback(guess, opponent.number!);
@@ -355,7 +347,7 @@ io.on('connection', (socket) => {
     
     if (isWin) {
       // Mark this player as having won
-      currentPlayer.hasWon = true;
+      game.players[socket.id].hasWon = true;
       
       // Check if opponent has already made their guess this round
       const opponentHasGuessed = opponent.guesses.length >= currentPlayer.guesses.length;
@@ -365,23 +357,23 @@ io.on('connection', (socket) => {
         if (opponent.hasWon) {
           handleGameEnd(game, null, true); // Draw
         } else {
-          handleGameEnd(game, currentPlayer.id); // Current player wins
+          handleGameEnd(game, socket.id); // Current player wins
         }
       } else {
         // Give opponent a chance to guess
-        game.potentialWinner = currentPlayer.id;
+        game.potentialWinner = socket.id;
         game.currentTurn = opponentId;
         
         io.to(gameId).emit('playerWonButGameContinues', {
           winnerName: currentPlayer.name,
-          winnerId: currentPlayer.id,
+          winnerId: socket.id,
           currentTurn: game.currentTurn,
           allGuesses: getAllGuessesSorted(game)
         });
       }
     } else {
       // Check if opponent has already won
-      if (game.potentialWinner && game.potentialWinner !== currentPlayer.id) {
+      if (game.potentialWinner && game.potentialWinner !== socket.id) {
         handleGameEnd(game, game.potentialWinner);
       } else {
         // Switch turns
