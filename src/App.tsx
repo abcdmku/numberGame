@@ -7,10 +7,12 @@ import { NumberSetup } from './components/NumberSetup';
 import { GameBoard } from './components/GameBoard';
 import { GameResults } from './components/GameResults';
 import { ErrorDisplay } from './components/ErrorDisplay';
+import { SocketDebugger } from './components/SocketDebugger';
 import { GamePhase } from './types/game';
 
 function App() {
   const {
+    socketRef,
     gameState,
     gamePhase,
     playerName,
@@ -71,6 +73,7 @@ function App() {
   return (
     <div className="min-h-screen">
       <ErrorDisplay error={error} onClose={() => setError('')} />
+      <SocketDebugger socket={socketRef.current} />
       
       {/* Return to Lobby Confirmation Dialog */}
       {showReturnConfirm && (

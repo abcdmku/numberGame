@@ -5,6 +5,7 @@ import { GameState, Player, GuessData, GamePhase } from '../types/game';
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  
   const [sessionId, setSessionId] = useState<string | null>(() => {
     // Generate a unique session ID for this browser tab/window
     const existingSessionId = sessionStorage.getItem('gameSessionId');
@@ -342,7 +343,8 @@ export const useSocket = () => {
   };
 
   return {
-    socket: socketRef.current,
+    socket,
+    socketRef,
     gameState,
     gamePhase,
     playerName,
