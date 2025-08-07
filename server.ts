@@ -107,7 +107,7 @@ function handleGameReconnection(socket: any, session: PlayerSession, game: Game)
   const gameStateData = createGameStateData(game);
   
   socket.emit('sessionReconnected', {
-    sessionId: session.playerId,
+    sessionId: session.sessionId,
     playerName: session.playerName,
     gameState: gameStateData
   });
@@ -202,8 +202,8 @@ io.on('connection', (socket) => {
           // Remove from disconnected players if they were there
           disconnectedPlayers.delete(sessionId);
           
-          // Update the session's playerId to match the new socket ID
-          existingSession.playerId = updatedPlayerId;
+          // Keep the original playerId but update socket references
+          existingSession.socketId = socket.id;
           
           handleGameReconnection(socket, existingSession, game);
           return;
@@ -359,7 +359,8 @@ io.on('connection', (socket) => {
         game.currentTurn = opponentId;
         
         io.to(gameId).emit('playerWonButGameContinues', {
-          winner: currentPlayer.name,
+          winnerName: currentPlayer.name,
+          winnerId: socket.id,
           currentTurn: game.currentTurn,
           allGuesses: getAllGuessesSorted(game)
         });

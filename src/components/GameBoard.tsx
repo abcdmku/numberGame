@@ -11,6 +11,8 @@ interface GameBoardProps {
   onMakeGuess: (guess: string) => void;
   gameNumber: number;
   gameState: any;
+  opponentStatus: 'connected' | 'disconnected' | 'reconnecting';
+  playerName: string;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
@@ -20,7 +22,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   allGuesses,
   onMakeGuess,
   gameNumber,
-  gameState
+  gameState,
+  opponentStatus,
+  playerName
 }) => {
   const [guess, setGuess] = useState('');
   
@@ -97,7 +101,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 </div>
                 
                 {/* Warning message if opponent has won */}
-                {gameState.potentialWinner && gameState.potentialWinner !== me?.name && isMyTurn && (
+                {gameState.potentialWinner && gameState.potentialWinner !== playerName && isMyTurn && (
                   <div className="mt-3 bg-red-500/20 backdrop-blur-sm rounded-xl p-3 border border-red-500/30">
                     <div className="flex items-center gap-2 text-red-300 text-sm font-medium">
                       <AlertCircle className="w-4 h-4" />

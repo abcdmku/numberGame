@@ -123,7 +123,7 @@ export const useSocket = () => {
       // Restore player name
       setPlayerName(data.playerName);
       sessionStorage.setItem('playerName', data.playerName);
-      sessionStorage.setItem('gameSessionId', data.sessionId);
+      sessionStorage.setItem('gameSessionId', sessionId || data.sessionId);
       sessionStorage.setItem('gameState', JSON.stringify(data.gameState));
       
       if (data.gameState.gameEnded) {
@@ -203,7 +203,7 @@ export const useSocket = () => {
         ...prev,
         currentTurn: data.currentTurn,
         allGuesses: data.allGuesses,
-        potentialWinner: data.winner
+        potentialWinner: data.winnerName
       }));
     });
 

@@ -39,7 +39,7 @@ export function updateGamePlayerReferences(
   sessionId: string, 
   newSocketId: string
 ): string | null {
-  // Find player by session ID
+  // Find player by session ID in their sessionId property
   const playerEntry = Object.entries(game.players).find(([_, player]) => 
     player.sessionId === sessionId
   );
@@ -48,29 +48,8 @@ export function updateGamePlayerReferences(
   
   const [playerId, playerData] = playerEntry;
   
-  // If player ID changed, move player data to new socket ID
-  if (playerId !== newSocketId) {
-    delete game.players[playerId];
-    game.players[newSocketId] = {
-      ...playerData,
-      id: newSocketId,
-      socketId: newSocketId
-    };
-    
-    // Update current turn if it was the old player ID
-    if (game.currentTurn === playerId) {
-      game.currentTurn = newSocketId;
-    }
-    
-    // Update first player if it was the old player ID
-    if (game.firstPlayer === playerId) {
-      game.firstPlayer = newSocketId;
-    }
-    
-    return newSocketId;
-  } else {
-    // Just update socket reference
-    game.players[playerId].socketId = newSocketId;
-    return playerId;
-  }
+  // Always just update the socket reference, keep the same player ID
+  game.players[playerId].socketId = newSocketId;
+  
+  return playerId;
 }

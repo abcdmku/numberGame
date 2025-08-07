@@ -152,6 +152,7 @@ function App() {
           gameNumber={gameState.gameNumber}
           gameState={gameState}
           opponentStatus={opponentStatus}
+          playerName={playerName}
         />
       )}
       
