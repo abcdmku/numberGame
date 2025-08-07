@@ -62,47 +62,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   const validationError = getValidationError(guess);
 
-  const renderFeedbackBadges = (feedback: { correctPosition: number; correctDigitWrongPosition: number }) => {
-    const badges = [];
-    
-    // Position badges (correct position)
-    if (feedback.correctPosition > 0) {
-      const isWinningGuess = feedback.correctPosition === 5;
-      badges.push(
-        <div key="position" className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-          isWinningGuess 
-            ? 'bg-gradient-to-r from-yellow-400/30 to-orange-400/30 text-yellow-200 border border-yellow-400/50 shadow-lg' 
-            : 'bg-green-500/20 text-green-300 border border-green-500/30'
-        }`}>
-          <CheckCircle className="w-3 h-3" />
-          <span>Position: {feedback.correctPosition}</span>
-        </div>
-      );
-    }
-    
-    // Close badges (correct digit, wrong position)
-    if (feedback.correctDigitWrongPosition > 0) {
-      badges.push(
-        <div key="close" className="flex items-center gap-1 bg-orange-500/20 text-orange-300 px-2 py-1 rounded-full text-xs font-medium border border-orange-500/30">
-          <AlertCircle className="w-3 h-3" />
-          <span>Close: {feedback.correctDigitWrongPosition}</span>
-        </div>
-      );
-    }
-    
-    // Show "None" only if no matches at all
-    if (feedback.correctPosition === 0 && feedback.correctDigitWrongPosition === 0) {
-      badges.push(
-        <div key="none" className="flex items-center gap-1 bg-red-500/20 text-red-300 px-2 py-1 rounded-full text-xs font-medium border border-red-500/30">
-          <XCircle className="w-3 h-3" />
-          <span>None</span>
-        </div>
-      );
-    }
-    
-    return badges;
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-2 md:p-4">
       <div className="max-w-6xl mx-auto">
@@ -228,7 +187,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 {/* My Guesses */}
                 <div>
                   <h4 className="text-lg font-medium text-green-300 mb-4">Your Guesses</h4>
-                  <div className="max-h-80 overflow-y-auto">
+                  <div className="overflow-y-auto">
                     {myGuesses.length === 0 ? (
                       <p className="text-blue-200 text-sm italic p-4 text-center">No guesses yet</p>
                     ) : (
@@ -286,7 +245,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <h4 className="text-lg font-medium text-purple-300 mb-4">
                     {opponent?.name}'s Guesses
                   </h4>
-                  <div className="max-h-80 overflow-y-auto">
+                  <div className="overflow-y-auto">
                     {opponentGuesses.length === 0 ? (
                       <p className="text-blue-200 text-sm italic p-4 text-center">No guesses yet</p>
                     ) : (
