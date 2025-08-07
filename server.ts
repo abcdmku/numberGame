@@ -97,6 +97,12 @@ function handleGameReconnection(socket: any, session: PlayerSession, game: Game)
   // Join game room
   socket.join(session.gameId);
   
+  // Update player socket reference in the game
+  const player = game.players[session.playerId];
+  if (player) {
+    player.socketId = socket.id;
+  }
+  
   // Send current game state
   const gameStateData = createGameStateData(game);
   
@@ -107,8 +113,8 @@ function handleGameReconnection(socket: any, session: PlayerSession, game: Game)
   });
   
   // Notify opponent that player reconnected
-  const opponentId = Object.keys(game.players).find(id => id !== socket.id);
-  if (opponentId && playerSockets.has(game.players[opponentId].socketId)) {
+  const opponentId = Object.keys(game.players).find(id => id !== session.playerId);
+  if (opponentId) {
     socket.to(session.gameId).emit('opponentReconnected', {
       playerName: session.playerName
     });
@@ -193,6 +199,12 @@ io.on('connection', (socket) => {
         // Update player data in game
         const updatedPlayerId = updateGamePlayerReferences(game, sessionId, socket.id);
         if (updatedPlayerId) {
+          // Remove from disconnected players if they were there
+          disconnectedPlayers.delete(sessionId);
+          
+          // Update the session's playerId to match the new socket ID
+          existingSession.playerId = updatedPlayerId;
+          
           handleGameReconnection(socket, existingSession, game);
           return;
         }

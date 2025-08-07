@@ -62,6 +62,11 @@ export function updateGamePlayerReferences(
       game.currentTurn = newSocketId;
     }
     
+    // Update first player if it was the old player ID
+    if (game.firstPlayer === playerId) {
+      game.firstPlayer = newSocketId;
+    }
+    
     return newSocketId;
   } else {
     // Just update socket reference
