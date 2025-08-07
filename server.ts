@@ -94,33 +94,30 @@ function createGameStateData(game: Game): GameStateData {
 
 // Helper function to handle game reconnection
 function handleGameReconnection(socket: any, session: PlayerSession, game: Game) {
-  // CRITICAL: Join the game room first so messages are broadcast properly
-  socket.join(session.gameId);
-  
   // Join game room
   socket.join(session.gameId);
   
   // Update player socket reference in the game
   const player = game.players[session.playerId];
   if (player) {
-  // Send current game state
-  const gameStateData = createGameStateData(game);
-  
-  socket.emit('sessionReconnected', {
-    sessionId: session.sessionId,
-    playerName: session.playerName,
-    gameState: gameStateData
-  });
-  
-  // Notify opponent that player reconnected
-  const opponentId = Object.keys(game.players).find(id => id !== session.playerId);
-  if (opponentId) {
-    socket.to(session.gameId!).emit('opponentReconnected', {
-      playerName: session.playerName
+    // Send current game state
+    const gameStateData = createGameStateData(game);
+    
+    socket.emit('sessionReconnected', {
+      sessionId: session.sessionId,
+      playerName: session.playerName,
+      gameState: gameStateData
     });
-  }
-  
-  console.log(`Player ${session.playerName} reconnected to game ${session.gameId}`);
+    
+    // Notify opponent that player reconnected
+    const opponentId = Object.keys(game.players).find(id => id !== session.playerId);
+    if (opponentId) {
+      socket.to(session.gameId!).emit('opponentReconnected', {
+        playerName: session.playerName
+      });
+    }
+    
+    console.log(`Player ${session.playerName} reconnected to game ${session.gameId}`);
   }
 }
 
@@ -158,27 +155,28 @@ io.on('connection', (socket) => {
   
   socket.on('reconnectToSession', (data) => {
     const { sessionId, playerName } = data;
+    console.log(`Reconnection attempt for session ${sessionId}, player ${playerName}`);
+    
     const session = playerSessions.get(sessionId);
     
     if (!session) {
+      console.log(`Session ${sessionId} not found`);
       socket.emit('sessionNotFound');
       return;
     }
     
     const game = activeGames.get(session.gameId!);
     if (!game) {
+      console.log(`Game ${session.gameId} not found for session ${sessionId}`);
       socket.emit('sessionNotFound');
       return;
     }
     
+    console.log(`Found session and game, updating socket references`);
+    
     // Update socket references
     updateSessionSocket(session, socket.id, sessionsBySocket);
     playerSockets.set(socket.id, socket);
-    
-    // CRITICAL: Join the game room immediately
-    if (session.gameId) {
-      socket.join(session.gameId);
-    }
     
     // Update game player references
     const updatedPlayerId = updateGamePlayerReferences(game, sessionId, socket.id);
@@ -189,6 +187,7 @@ io.on('connection', (socket) => {
     // Remove from disconnected players if they were there
     disconnectedPlayers.delete(sessionId);
     
+    console.log(`Calling handleGameReconnection for ${playerName}`);
     handleGameReconnection(socket, session, game);
   });
   
@@ -495,8 +494,10 @@ io.on('connection', (socket) => {
 });
 
 // Clean up old disconnected players (after 5 minutes)
-setInterval(() => {
+const cleanupInterval = setInterval(() => {
   const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+  let cleanedCount = 0;
+  
   for (const [sessionId, data] of disconnectedPlayers.entries()) {
     if (data.disconnectTime < fiveMinutesAgo) {
       disconnectedPlayers.delete(sessionId);
@@ -510,8 +511,12 @@ setInterval(() => {
         }
         activeGames.delete(data.gameId);
       }
-      console.log(`Cleaned up expired session ${sessionId}`);
+      cleanedCount++;
     }
+  }
+  
+  if (cleanedCount > 0) {
+    console.log(`Cleaned up ${cleanedCount} expired sessions`);
   }
 }, 60000); // Check every minute
 

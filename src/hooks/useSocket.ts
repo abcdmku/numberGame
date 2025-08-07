@@ -38,14 +38,16 @@ export const useSocket = () => {
     const savedPlayerName = sessionStorage.getItem('playerName');
     const savedGameState = sessionStorage.getItem('gameState');
     
-    if (savedSessionId && savedPlayerName && savedGameState) {
+    if (savedSessionId && savedPlayerName) {
       setIsReconnecting(true);
       setPlayerName(savedPlayerName);
-      try {
-        const parsedGameState = JSON.parse(savedGameState);
-        setGameState(parsedGameState);
-      } catch (e) {
-        console.error('Failed to parse saved game state:', e);
+      if (savedGameState) {
+        try {
+          const parsedGameState = JSON.parse(savedGameState);
+          setGameState(parsedGameState);
+        } catch (e) {
+          console.error('Failed to parse saved game state:', e);
+        }
       }
     }
     
@@ -54,7 +56,7 @@ export const useSocket = () => {
     socketRef.current = newSocket;
 
     // Try to reconnect to existing session
-    if (savedSessionId && savedPlayerName) {
+    if (savedSessionId && savedPlayerName && !newSocket.recovered) {
       newSocket.emit('reconnectToSession', { sessionId: savedSessionId, playerName: savedPlayerName });
     }
 
@@ -64,7 +66,6 @@ export const useSocket = () => {
       newSocket.close();
       socketRef.current = null;
     };
-  }, []);
 
   const resetToLobby = () => {
     // Clear session storage for this tab
@@ -109,22 +110,25 @@ export const useSocket = () => {
 
   const setupSocketListeners = (socketInstance: Socket) => {
     socketInstance.on('sessionNotFound', () => {
+      console.log('Session not found, clearing storage and returning to lobby');
       sessionStorage.removeItem('gameSessionId');
       sessionStorage.removeItem('playerName');
       sessionStorage.removeItem('gameState');
       setSessionId(null);
       setIsReconnecting(false);
       setGamePhase(GamePhase.LOBBY);
+      setError('');
     });
     
     socketInstance.on('sessionReconnected', (data) => {
+      console.log('Session reconnected successfully:', data);
       setGameState(data.gameState);
       setIsReconnecting(false);
       
       // Restore player name
       setPlayerName(data.playerName);
       sessionStorage.setItem('playerName', data.playerName);
-      sessionStorage.setItem('gameSessionId', sessionId || data.sessionId);
+      sessionStorage.setItem('gameSessionId', data.sessionId);
       sessionStorage.setItem('gameState', JSON.stringify(data.gameState));
       
       if (data.gameState.gameEnded) {
