@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Send, History, Trophy, Target, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { Send, History, Trophy, Target, CheckCircle, AlertCircle, XCircle, Star } from 'lucide-react';
 import { Player, GuessData } from '../types/game';
 import { VersionDisplay } from './VersionDisplay';
 
