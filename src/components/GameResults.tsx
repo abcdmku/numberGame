@@ -168,14 +168,14 @@ export const GameResults: React.FC<GameResultsProps> = ({
                             <div className="text-center">
                               <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
                                 isWin 
-                                  ? 'relative'
+                                  ? 'bg-yellow-400 text-yellow-900 shadow-lg relative'
                                   : guessData.feedback.correctPosition > 0
                                   ? 'bg-emerald-600 text-white'
                                   : 'bg-slate-600 text-slate-300'
                               }`}>
                                 {isWin ? (
                                   <>
-                                    <Star className="w-8 h-8 absolute inset-0 text-yellow-400 fill-current" />
+                                    <Star className="w-6 h-6 absolute inset-0 text-yellow-600 fill-current" />
                                     <span className="relative z-10 text-xs font-bold">5</span>
                                   </>
                                 ) : (
@@ -224,21 +224,21 @@ export const GameResults: React.FC<GameResultsProps> = ({
                               {guessData.turn}
                             </div>
                             <div className={`text-center font-mono text-lg tracking-wider ${
-                              isWin ? 'text-yellow-200 font-bold' : 'text-white'
+                              isWin ? 'text-green-400 font-bold' : 'text-white'
                             }`}>
                               {guessData.guess}
                             </div>
                             <div className="text-center">
                               <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
                                 isWin 
-                                  ? 'relative' 
+                                  ? 'bg-yellow-400 text-yellow-900 shadow-lg relative'
                                   : guessData.feedback.correctPosition > 0
                                   ? 'bg-emerald-600 text-white'
                                   : 'bg-slate-600 text-slate-300'
                               }`}>
                                 {isWin ? (
                                   <>
-                                    <Star className="w-8 h-8 absolute inset-0 text-yellow-400 fill-current" />
+                                    <Star className="w-6 h-6 absolute inset-0 text-yellow-600 fill-current" />
                                     <span className="relative z-10 text-xs font-bold">5</span>
                                   </>
                                 ) : (
