@@ -219,14 +219,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                               <div className="text-center">
                                 <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
                                   isWin 
-                                    ? 'bg-yellow-400 text-yellow-900 shadow-lg relative'
+                                    ? 'relative'
                                     : guessData.feedback.correctPosition > 0
                                     ? 'bg-green-500 text-white'
                                     : 'bg-gray-600 text-gray-300'
                                 }`}>
                                   {isWin ? (
                                     <>
-                                      <Star className="w-6 h-6 absolute inset-0 text-yellow-600 fill-current" />
+                                      <Star className="w-8 h-8 absolute inset-0 text-yellow-400 fill-current" />
                                       <span className="relative z-10 text-xs font-bold">5</span>
                                     </>
                                   ) : (
@@ -284,12 +284,19 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                               <div className="text-center">
                                 <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
                                   isWin 
-                                    ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg' 
+                                    ? 'relative' 
                                     : guessData.feedback.correctPosition > 0
                                     ? 'bg-green-500 text-white'
                                     : 'bg-gray-600 text-gray-300'
                                 }`}>
-                                  {guessData.feedback.correctPosition}
+                                  {isWin ? (
+                                    <>
+                                      <Star className="w-8 h-8 absolute inset-0 text-yellow-400 fill-current" />
+                                      <span className="relative z-10 text-xs font-bold">5</span>
+                                    </>
+                                  ) : (
+                                    guessData.feedback.correctPosition
+                                  )}
                                 </span>
                               </div>
                               <div className="text-center">
