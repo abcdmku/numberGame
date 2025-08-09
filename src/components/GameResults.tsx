@@ -362,12 +362,21 @@ export const GameResults: React.FC<GameResultsProps> = ({
               <p className="text-sm text-blue-200 text-center">
                 Waiting for {opponent?.name} to accept...
               </p>
-              <div className="mt-3 flex justify-center">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              <div className="mt-4 space-y-3">
+                <div className="flex justify-center space-x-2">
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce shadow-lg shadow-blue-400/50" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce shadow-lg shadow-blue-400/50" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce shadow-lg shadow-blue-400/50" style={{ animationDelay: '300ms' }}></div>
+                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce shadow-lg shadow-blue-400/50" style={{ animationDelay: '450ms' }}></div>
                 </div>
+                
+                <div className="w-40 mx-auto">
+                  <div className="w-full bg-blue-600/20 rounded-full h-1.5">
+                    <div className="h-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full animate-pulse" style={{ width: '65%' }}></div>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-blue-300 text-center">Request sent successfully</p>
               </div>
             </div>
             

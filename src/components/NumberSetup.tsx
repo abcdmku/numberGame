@@ -221,17 +221,30 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
         
         {me?.ready && opponent?.ready && (
           <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-700">
-            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-full border border-green-500/30 mb-4">
-              <Check className="w-5 h-5 text-green-400" />
-              <span className="text-white font-medium">Both players ready!</span>
+            <div className="relative inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-full border border-green-500/30 mb-4 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-400/10 via-blue-400/10 to-green-400/10 animate-pulse"></div>
+              <Check className="w-5 h-5 text-green-400 relative z-10" />
+              <span className="text-white font-medium relative z-10">Both players ready!</span>
             </div>
-            <p className="text-green-300 text-sm">Starting the game...</p>
-            <div className="mt-4 flex justify-center">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            <p className="text-green-300 text-sm mb-4">Starting the game...</p>
+            
+            {/* Enhanced loading animation */}
+            <div className="space-y-4">
+              <div className="flex justify-center space-x-2">
+                <div className="w-3 h-3 bg-green-400 rounded-full animate-bounce shadow-lg shadow-green-400/50" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce shadow-lg shadow-blue-400/50" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce shadow-lg shadow-purple-400/50" style={{ animationDelay: '300ms' }}></div>
+                <div className="w-3 h-3 bg-pink-400 rounded-full animate-bounce shadow-lg shadow-pink-400/50" style={{ animationDelay: '450ms' }}></div>
               </div>
+              
+              {/* Progress bar */}
+              <div className="w-48 mx-auto">
+                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-green-500 via-blue-500 to-purple-500 rounded-full animate-pulse" style={{ width: '85%' }}></div>
+                </div>
+              </div>
+              
+              <p className="text-xs text-blue-200">Preparing game board...</p>
             </div>
           </div>
         )}

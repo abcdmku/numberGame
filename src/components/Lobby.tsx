@@ -68,8 +68,11 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
           >
             {isSubmitting ? (
               <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Joining...
+                <div className="relative">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="absolute inset-0 w-5 h-5 border border-white/10 rounded-full animate-ping"></div>
+                </div>
+                <span className="animate-pulse">Joining game...</span>
               </>
             ) : (
               <>

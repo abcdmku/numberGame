@@ -255,11 +255,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <div className="overflow-y-auto max-h-64 md:max-h-96">
                     {myGuesses.length === 0 ? (
                       <div className="text-center p-6">
-                        <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
                           <Target className="w-6 h-6 text-green-300" />
                         </div>
                         <p className="text-blue-200 text-sm italic">No guesses yet</p>
                         <p className="text-xs text-blue-300 mt-1">Make your first guess!</p>
+                        
+                        {/* Skeleton loader for upcoming guesses */}
+                        <div className="mt-4 space-y-2 opacity-30">
+                          <div className="h-3 bg-white/10 rounded animate-pulse"></div>
+                          <div className="h-3 bg-white/5 rounded animate-pulse" style={{ animationDelay: '150ms' }}></div>
+                          <div className="h-3 bg-white/10 rounded animate-pulse" style={{ animationDelay: '300ms' }}></div>
+                        </div>
                       </div>
                     ) : (
                       <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
@@ -338,11 +345,18 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <div className="overflow-y-auto max-h-64 md:max-h-96">
                     {opponentGuesses.length === 0 ? (
                       <div className="text-center p-6">
-                        <div className="w-12 h-12 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <div className="w-12 h-12 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
                           <Target className="w-6 h-6 text-purple-300" />
                         </div>
                         <p className="text-blue-200 text-sm italic">No guesses yet</p>
                         <p className="text-xs text-blue-300 mt-1">Waiting for {opponent?.name}...</p>
+                        
+                        {/* Animated waiting indicator */}
+                        <div className="mt-4 flex justify-center space-x-1">
+                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
                       </div>
                     ) : (
                       <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">

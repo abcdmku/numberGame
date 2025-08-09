@@ -60,12 +60,28 @@ function App() {
   if (isReconnecting) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 max-w-md shadow-2xl border border-white/20 text-center">
-          <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-6 mx-auto">
-            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+        <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 max-w-md shadow-2xl border border-white/20 text-center animate-in fade-in duration-700">
+          <div className="relative flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-6 mx-auto">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-50 animate-ping"></div>
+            <div className="relative w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
           <h2 className="text-2xl font-bold text-white mb-4">Reconnecting...</h2>
-          <p className="text-blue-100">Restoring your game session</p>
+          <p className="text-blue-100 mb-6">Restoring your game session</p>
+          
+          {/* Enhanced progress indicators */}
+          <div className="space-y-4">
+            <div className="flex justify-center space-x-2">
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
+            
+            <div className="w-full bg-white/10 rounded-full h-1">
+              <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+            </div>
+            
+            <p className="text-xs text-blue-200">This usually takes a few seconds</p>
+          </div>
         </div>
       </div>
     );

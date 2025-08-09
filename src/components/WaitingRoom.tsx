@@ -67,11 +67,33 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({
           </div>
         </div>
         
-        <div className="mt-6 flex justify-center">
-          <div className="flex space-x-1 hover:space-x-2 transition-all duration-300">
-            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce hover:bg-blue-300 hover:scale-125 transition-all" style={{ animationDelay: '0ms' }}></div>
-            <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce hover:bg-purple-300 hover:scale-125 transition-all" style={{ animationDelay: '150ms' }}></div>
-            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce hover:bg-indigo-300 hover:scale-125 transition-all" style={{ animationDelay: '300ms' }}></div>
+        {/* Enhanced Loading Animation */}
+        <div className="mt-6 space-y-4">
+          <div className="flex justify-center">
+            <div className="flex space-x-1 hover:space-x-2 transition-all duration-300">
+              <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce hover:bg-blue-300 hover:scale-125 transition-all" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-3 h-3 bg-purple-400 rounded-full animate-bounce hover:bg-purple-300 hover:scale-125 transition-all" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-3 h-3 bg-indigo-400 rounded-full animate-bounce hover:bg-indigo-300 hover:scale-125 transition-all" style={{ animationDelay: '300ms' }}></div>
+              <div className="w-3 h-3 bg-pink-400 rounded-full animate-bounce hover:bg-pink-300 hover:scale-125 transition-all" style={{ animationDelay: '450ms' }}></div>
+            </div>
+          </div>
+          
+          {/* Progress Wave */}
+          <div className="flex justify-center">
+            <div className="w-32 h-1 bg-white/10 rounded-full overflow-hidden relative">
+              <div className="absolute w-8 h-full bg-gradient-to-r from-transparent via-blue-400 to-transparent rounded-full animate-ping opacity-75"></div>
+              <div className="absolute w-4 h-full bg-gradient-to-r from-transparent via-white to-transparent rounded-full animate-pulse"></div>
+            </div>
+          </div>
+          
+          {/* Connection Status Indicator */}
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
+              <div className={`w-2 h-2 rounded-full transition-all duration-500 ${
+                connectionPulse ? 'bg-green-400 shadow-lg shadow-green-400/50' : 'bg-green-400'
+              }`}></div>
+              <span className="text-xs text-blue-200">Connected to server</span>
+            </div>
           </div>
         </div>
       </div>
