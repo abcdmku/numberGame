@@ -66,6 +66,7 @@ export const useSocket = () => {
       newSocket.close();
       socketRef.current = null;
     };
+  }, []);
 
   const resetToLobby = () => {
     // Clear session storage for this tab
