@@ -81,10 +81,13 @@ export function calculateFeedback(guess: string, target: string) {
 }
 
 // Create a new game with two players
-export function createGame(player1: Omit<Player, 'sessionId' | 'number' | 'ready' | 'guesses' | 'gamesWon'>, player2: Omit<Player, 'sessionId' | 'number' | 'ready' | 'guesses' | 'gamesWon'>): Game {
+export function createGame(
+  player1: Omit<Player, 'sessionId' | 'number' | 'ready' | 'guesses' | 'gamesWon'>, 
+  player2: Omit<Player, 'sessionId' | 'number' | 'ready' | 'guesses' | 'gamesWon'>,
+  player1SessionId: string,
+  player2SessionId: string
+): Game {
   const gameId = generateGameId();
-  const player1SessionId = generateSessionId();
-  const player2SessionId = generateSessionId();
   
   const game: Game = {
     id: gameId,

@@ -25,7 +25,9 @@ import {
   cleanupPlayerName,
   findGameByPlayerId,
   updateSessionSocket,
-  updateGamePlayerReferences
+  updateGamePlayerReferences,
+  findPlayerBySocketId,
+  getPlayerIdBySocketId
 } from './utils/sessionUtils.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -93,18 +95,19 @@ function createGameStateData(game: Game): GameStateData {
 }
 
 // Helper function to handle game reconnection
-function handleGameReconnection(socket: any, session: PlayerSession, game: Game) {
+function handleGameReconnection(socket: any, session: PlayerSession, game: Game, sessionId: string) {
   // Join game room
   socket.join(session.gameId);
   
   // Update player socket reference in the game
   const player = game.players[session.playerId];
+  
   if (player) {
     // Send current game state
     const gameStateData = createGameStateData(game);
     
     socket.emit('sessionReconnected', {
-      sessionId: session.sessionId,
+      sessionId: sessionId,
       playerName: session.playerName,
       gameState: gameStateData
     });
@@ -151,7 +154,7 @@ function handleGameEnd(game: Game, winnerId: string | null, isDraw: boolean = fa
 }
 
 io.on('connection', (socket) => {
-  console.log('Player connected:', socket.id);
+  console.log('SERVER: New player connected:', socket.id);
   
   socket.on('reconnectToSession', (data) => {
     const { sessionId, playerName } = data;
@@ -160,7 +163,7 @@ io.on('connection', (socket) => {
     const session = playerSessions.get(sessionId);
     
     if (!session) {
-      console.log(`Session ${sessionId} not found`);
+      console.log(`SERVER: Session ${sessionId} not found, emitting sessionNotFound`);
       socket.emit('sessionNotFound');
       return;
     }
@@ -175,10 +178,10 @@ io.on('connection', (socket) => {
     console.log(`Found session and game, updating socket references`);
     
     // Update socket references
-    updateSessionSocket(session, socket.id, sessionsBySocket);
+    updateSessionSocket(session, socket.id, sessionsBySocket, sessionId);
     playerSockets.set(socket.id, socket);
     
-    // Update game player references
+    // Update game player references FIRST
     const updatedPlayerId = updateGamePlayerReferences(game, sessionId, socket.id);
     if (updatedPlayerId) {
       session.playerId = updatedPlayerId;
@@ -187,8 +190,7 @@ io.on('connection', (socket) => {
     // Remove from disconnected players if they were there
     disconnectedPlayers.delete(sessionId);
     
-    console.log(`Calling handleGameReconnection for ${playerName}`);
-    handleGameReconnection(socket, session, game);
+    handleGameReconnection(socket, session, game, sessionId);
   });
   
   socket.on('joinLobby', ({ playerName, sessionId }) => {
@@ -198,19 +200,20 @@ io.on('connection', (socket) => {
       const game = activeGames.get(existingSession.gameId);
       if (game && !game.gameEnded) {
         // Update socket references for existing session
-        updateSessionSocket(existingSession, socket.id, sessionsBySocket);
+        updateSessionSocket(existingSession, socket.id, sessionsBySocket, sessionId);
         playerSockets.set(socket.id, socket);
         
-        // Update player data in game
+        // Update player data in game FIRST
         const updatedPlayerId = updateGamePlayerReferences(game, sessionId, socket.id);
         if (updatedPlayerId) {
+          // Update session with new player ID
+          existingSession.playerId = updatedPlayerId;
+          existingSession.socketId = socket.id;
+          
           // Remove from disconnected players if they were there
           disconnectedPlayers.delete(sessionId);
           
-          // Keep the original playerId but update socket references
-          existingSession.socketId = socket.id;
-          
-          handleGameReconnection(socket, existingSession, game);
+          handleGameReconnection(socket, existingSession, game, sessionId);
           return;
         }
       }
@@ -254,13 +257,17 @@ io.on('connection', (socket) => {
       const waitingPlayer = Array.from(waitingPlayers.values())[0];
       waitingPlayers.delete(waitingPlayer.id);
       
-      // Create game
-      const game = createGame(waitingPlayer, player);
+      // Get sessionIds for both players
+      const waitingPlayerSessionId = waitingPlayer.sessionId; // This should be the client sessionId
+      const currentPlayerSessionId = sessionId; // This is the client sessionId
+      
+      // Create game with proper sessionIds
+      const game = createGame(waitingPlayer, player, waitingPlayerSessionId, currentPlayerSessionId);
       activeGames.set(game.id, game);
       
       // Update sessions with game ID
-      const waitingSession = playerSessions.get(waitingPlayer.sessionId);
-      const playerSession = playerSessions.get(sessionId);
+      const waitingSession = playerSessions.get(waitingPlayerSessionId);
+      const playerSession = playerSessions.get(currentPlayerSessionId);
       if (waitingSession) waitingSession.gameId = game.id;
       if (playerSession) playerSession.gameId = game.id;
       
@@ -286,15 +293,19 @@ io.on('connection', (socket) => {
   
   socket.on('setNumber', ({ gameId, number }) => {
     const game = activeGames.get(gameId);
-    if (!game || !game.players[socket.id]) return;
+    if (!game) return;
+    
+    const player = findPlayerBySocketId(game, socket.id);
+    const playerId = getPlayerIdBySocketId(game, socket.id);
+    if (!player || !playerId) return;
     
     if (!validateNumber(number)) {
       socket.emit('numberError', 'Invalid number. Must be 5 digits with no repeats.');
       return;
     }
     
-    game.players[socket.id].number = number;
-    game.players[socket.id].ready = true;
+    game.players[playerId].number = number;
+    game.players[playerId].ready = true;
     
     // Check if both players are ready
     const allReady = Object.values(game.players).every(player => player.ready);
@@ -316,7 +327,12 @@ io.on('connection', (socket) => {
   socket.on('makeGuess', ({ gameId, guess }) => {
     const game = activeGames.get(gameId);
     if (!game || !game.gameStarted || game.gameEnded) return;
-    if (game.currentTurn !== socket.id) return;
+    
+    const player = findPlayerBySocketId(game, socket.id);
+    const playerId = getPlayerIdBySocketId(game, socket.id);
+    if (!player || !playerId) return;
+    
+    if (game.currentTurn !== playerId) return;
     
     if (!validateNumber(guess)) {
       socket.emit('guessError', 'Invalid guess. Must be 5 digits with no repeats.');
@@ -324,9 +340,9 @@ io.on('connection', (socket) => {
     }
     
     // Find opponent
-    const opponentId = Object.keys(game.players).find(id => id !== socket.id)!;
+    const opponentId = Object.keys(game.players).find(id => id !== playerId)!;
     const opponent = game.players[opponentId];
-    const currentPlayer = game.players[socket.id];
+    const currentPlayer = game.players[playerId];
     
     // Calculate feedback
     const feedback = calculateFeedback(guess, opponent.number!);
@@ -346,7 +362,7 @@ io.on('connection', (socket) => {
     
     if (isWin) {
       // Mark this player as having won
-      game.players[socket.id].hasWon = true;
+      game.players[playerId].hasWon = true;
       
       // Check if opponent has already made their guess this round
       const opponentHasGuessed = opponent.guesses.length >= currentPlayer.guesses.length;
@@ -356,23 +372,23 @@ io.on('connection', (socket) => {
         if (opponent.hasWon) {
           handleGameEnd(game, null, true); // Draw
         } else {
-          handleGameEnd(game, socket.id); // Current player wins
+          handleGameEnd(game, playerId); // Current player wins
         }
       } else {
         // Give opponent a chance to guess
-        game.potentialWinner = socket.id;
+        game.potentialWinner = playerId;
         game.currentTurn = opponentId;
         
         io.to(gameId).emit('playerWonButGameContinues', {
           winnerName: currentPlayer.name,
-          winnerId: socket.id,
+          winnerId: playerId,
           currentTurn: game.currentTurn,
           allGuesses: getAllGuessesSorted(game)
         });
       }
     } else {
       // Check if opponent has already won
-      if (game.potentialWinner && game.potentialWinner !== socket.id) {
+      if (game.potentialWinner && game.potentialWinner !== playerId) {
         handleGameEnd(game, game.potentialWinner);
       } else {
         // Switch turns
@@ -422,9 +438,15 @@ io.on('connection', (socket) => {
     const game = activeGames.get(gameId);
     if (!game) return;
     
-    const opponentId = Object.keys(game.players).find(id => id !== socket.id);
+    const playerId = getPlayerIdBySocketId(game, socket.id);
+    if (!playerId) return;
+    
+    const opponentId = Object.keys(game.players).find(id => id !== playerId);
     if (opponentId) {
-      io.to(opponentId).emit('rematchRequested');
+      const opponent = game.players[opponentId];
+      if (opponent?.socketId) {
+        io.to(opponent.socketId).emit('rematchRequested');
+      }
     }
   });
   

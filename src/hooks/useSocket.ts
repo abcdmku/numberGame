@@ -22,9 +22,33 @@ export const useSocket = () => {
     allGuesses: [],
     gameNumber: 1
   });
-  const [gamePhase, setGamePhase] = useState<GamePhase>(GamePhase.LOBBY);
-  const [playerName, setPlayerName] = useState('');
-  const [myNumber, setMyNumber] = useState('');
+  const [gamePhase, setGamePhase] = useState<GamePhase>(() => {
+    // Determine initial game phase based on saved state
+    const savedGameState = sessionStorage.getItem('gameState');
+    const savedSessionId = sessionStorage.getItem('gameSessionId');
+    
+    if (savedSessionId && savedGameState) {
+      try {
+        const parsedGameState = JSON.parse(savedGameState);
+        if (parsedGameState.gameEnded) {
+          return GamePhase.ENDED;
+        } else if (parsedGameState.gameStarted) {
+          return GamePhase.PLAYING;
+        } else if (parsedGameState.gameId) {
+          return GamePhase.SETUP;
+        }
+      } catch (e) {
+        console.error('Failed to parse saved game state:', e);
+      }
+    }
+    return GamePhase.LOBBY;
+  });
+  const [playerName, setPlayerName] = useState(() => {
+    return sessionStorage.getItem('playerName') || '';
+  });
+  const [myNumber, setMyNumber] = useState(() => {
+    return sessionStorage.getItem('myNumber') || '';
+  });
   const [error, setError] = useState('');
   const [rematchState, setRematchState] = useState({
     requested: false,
@@ -51,7 +75,13 @@ export const useSocket = () => {
       }
     }
     
-    const newSocket = io();
+    const newSocket = io({
+      autoConnect: true,
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+      timeout: 20000,
+    });
     setSocket(newSocket);
     socketRef.current = newSocket;
 
@@ -62,7 +92,54 @@ export const useSocket = () => {
 
     setupSocketListeners(newSocket);
 
+    // Handle page visibility change (for mobile sleep/wake)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && socketRef.current) {
+        const currentSessionId = sessionStorage.getItem('gameSessionId');
+        const currentPlayerName = sessionStorage.getItem('playerName');
+        
+        if (currentSessionId && currentPlayerName && !socketRef.current.connected) {
+          setIsReconnecting(true);
+          socketRef.current.connect();
+          
+          setTimeout(() => {
+            if (socketRef.current && socketRef.current.connected) {
+              socketRef.current.emit('reconnectToSession', { 
+                sessionId: currentSessionId, 
+                playerName: currentPlayerName 
+              });
+            }
+          }, 500);
+        }
+      }
+    };
+
+    // Handle page focus (for desktop/mobile focus events)
+    const handleFocus = () => {
+      const currentSessionId = sessionStorage.getItem('gameSessionId');
+      const currentPlayerName = sessionStorage.getItem('playerName');
+      
+      if (currentSessionId && currentPlayerName && socketRef.current && !socketRef.current.connected) {
+        setIsReconnecting(true);
+        socketRef.current.connect();
+        
+        setTimeout(() => {
+          if (socketRef.current && socketRef.current.connected) {
+            socketRef.current.emit('reconnectToSession', { 
+              sessionId: currentSessionId, 
+              playerName: currentPlayerName 
+            });
+          }
+        }, 500);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
       newSocket.close();
       socketRef.current = null;
     };
@@ -73,6 +150,7 @@ export const useSocket = () => {
     sessionStorage.removeItem('gameSessionId');
     sessionStorage.removeItem('playerName');
     sessionStorage.removeItem('gameState');
+    sessionStorage.removeItem('myNumber');
     setSessionId(null);
     setIsReconnecting(false);
     setOpponentStatus('connected');
@@ -102,7 +180,13 @@ export const useSocket = () => {
     
     // Create new socket connection after a brief delay to ensure server cleanup
     setTimeout(() => {
-      const newSocket = io();
+      const newSocket = io({
+        autoConnect: true,
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 5,
+        timeout: 20000,
+      });
       setSocket(newSocket);
       socketRef.current = newSocket;
       setupSocketListeners(newSocket);
@@ -110,14 +194,59 @@ export const useSocket = () => {
   };
 
   const setupSocketListeners = (socketInstance: Socket) => {
+    // Handle connection events
+    socketInstance.on('connect', () => {
+      console.log('Socket connected');
+      setIsReconnecting(false);
+    });
+
+    socketInstance.on('disconnect', (reason) => {
+      console.log('Socket disconnected:', reason);
+      // Only show reconnecting if we have a session to reconnect to
+      const currentSessionId = sessionStorage.getItem('gameSessionId');
+      if (currentSessionId && reason !== 'io client disconnect') {
+        setIsReconnecting(true);
+      }
+    });
+
+    socketInstance.on('reconnect', (attemptNumber) => {
+      console.log('Socket reconnected after', attemptNumber, 'attempts');
+      setIsReconnecting(false);
+      
+      // Try to rejoin session after automatic reconnection
+      const currentSessionId = sessionStorage.getItem('gameSessionId');
+      const currentPlayerName = sessionStorage.getItem('playerName');
+      
+      if (currentSessionId && currentPlayerName) {
+        socketInstance.emit('reconnectToSession', { 
+          sessionId: currentSessionId, 
+          playerName: currentPlayerName 
+        });
+      }
+    });
+
+    socketInstance.on('reconnect_attempt', (attemptNumber) => {
+      console.log('Attempting to reconnect... attempt', attemptNumber);
+      setIsReconnecting(true);
+    });
+
+    socketInstance.on('reconnect_failed', () => {
+      console.log('Failed to reconnect');
+      setIsReconnecting(false);
+      setError('Connection failed. Please refresh the page to continue.');
+    });
+
     socketInstance.on('sessionNotFound', () => {
       console.log('Session not found, clearing storage and returning to lobby');
       sessionStorage.removeItem('gameSessionId');
       sessionStorage.removeItem('playerName');
       sessionStorage.removeItem('gameState');
+      sessionStorage.removeItem('myNumber');
       setSessionId(null);
       setIsReconnecting(false);
       setGamePhase(GamePhase.LOBBY);
+      setPlayerName('');
+      setMyNumber('');
       setError('');
     });
     
@@ -126,18 +255,21 @@ export const useSocket = () => {
       setGameState(data.gameState);
       setIsReconnecting(false);
       
-      // Restore player name
-      setPlayerName(data.playerName);
-      sessionStorage.setItem('playerName', data.playerName);
+      // DON'T update player name from server - keep our saved name
+      // setPlayerName(data.playerName);
+      // sessionStorage.setItem('playerName', data.playerName);
       sessionStorage.setItem('gameSessionId', data.sessionId);
       sessionStorage.setItem('gameState', JSON.stringify(data.gameState));
       
+      // Update game phase based on current game state
       if (data.gameState.gameEnded) {
         setGamePhase(GamePhase.ENDED);
       } else if (data.gameState.gameStarted) {
         setGamePhase(GamePhase.PLAYING);
-      } else {
+      } else if (data.gameState.gameId) {
         setGamePhase(GamePhase.SETUP);
+      } else {
+        setGamePhase(GamePhase.WAITING);
       }
       
       setOpponentStatus('connected');
@@ -158,14 +290,19 @@ export const useSocket = () => {
         setSessionId(data.sessionId);
         sessionStorage.setItem('gameSessionId', data.sessionId);
       }
-      setGameState(prev => ({
-        ...prev,
+      const newGameState = {
         gameId: data.gameId,
         players: data.players,
-        currentTurn: data.currentTurn
-      }));
+        currentTurn: data.currentTurn,
+        gameStarted: false,
+        gameEnded: false,
+        winner: null,
+        allGuesses: [],
+        gameNumber: 1
+      };
+      setGameState(newGameState);
       setGamePhase(GamePhase.SETUP);
-      sessionStorage.setItem('gameState', JSON.stringify(gameState));
+      sessionStorage.setItem('gameState', JSON.stringify(newGameState));
       setError('');
     });
 
@@ -182,17 +319,20 @@ export const useSocket = () => {
     });
 
     socketInstance.on('gameStarted', (data) => {
-      setGameState(prev => ({
-        ...prev,
-        currentTurn: data.currentTurn,
-        players: data.players.map((p: any) => ({
-          ...prev.players.find(pp => pp.id === p.id),
-          ...p
-        })),
-        gameStarted: true
-      }));
+      setGameState(prev => {
+        const newGameState = {
+          ...prev,
+          currentTurn: data.currentTurn,
+          players: data.players.map((p: any) => ({
+            ...prev.players.find(pp => pp.id === p.id),
+            ...p
+          })),
+          gameStarted: true
+        };
+        sessionStorage.setItem('gameState', JSON.stringify(newGameState));
+        return newGameState;
+      });
       setGamePhase(GamePhase.PLAYING);
-      sessionStorage.setItem('gameState', JSON.stringify(gameState));
       setError('');
     });
 
@@ -214,18 +354,21 @@ export const useSocket = () => {
     });
 
     socketInstance.on('gameEnded', (data) => {
-      setGameState(prev => ({
-        ...prev,
-        gameEnded: true,
-        winner: data.winner,
-        isDraw: data.isDraw || false,
-        players: data.players.map((p: any) => ({
-          ...prev.players.find(pp => pp.id === p.id),
-          ...p
-        }))
-      }));
+      setGameState(prev => {
+        const newGameState = {
+          ...prev,
+          gameEnded: true,
+          winner: data.winner,
+          isDraw: data.isDraw || false,
+          players: data.players.map((p: any) => ({
+            ...prev.players.find(pp => pp.id === p.id),
+            ...p
+          }))
+        };
+        sessionStorage.setItem('gameState', JSON.stringify(newGameState));
+        return newGameState;
+      });
       setGamePhase(GamePhase.ENDED);
-      sessionStorage.setItem('gameState', JSON.stringify(gameState));
     });
 
     socketInstance.on('newGameStarted', (data) => {
@@ -245,12 +388,14 @@ export const useSocket = () => {
       }));
       setGamePhase(GamePhase.SETUP);
       setMyNumber('');
+      sessionStorage.removeItem('myNumber');
       setError('');
       setRematchState({ requested: false, opponentRequested: false });
     });
 
     socketInstance.on('numberGenerated', (number) => {
       setMyNumber(number);
+      sessionStorage.setItem('myNumber', number);
     });
 
     socketInstance.on('numberError', (message) => {
@@ -319,6 +464,7 @@ export const useSocket = () => {
   const setNumber = (number: string) => {
     if (socketRef.current && gameState.gameId) {
       setMyNumber(number);
+      sessionStorage.setItem('myNumber', number);
       socketRef.current.emit('setNumber', { gameId: gameState.gameId, number });
     }
   };
