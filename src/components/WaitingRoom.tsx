@@ -4,9 +4,15 @@ import { VersionDisplay } from './VersionDisplay';
 
 interface WaitingRoomProps {
   playerName: string;
+  opponentStatus?: 'connected' | 'disconnected' | 'reconnecting';
+  onWaitForOpponent?: () => void;
 }
 
-export const WaitingRoom: React.FC<WaitingRoomProps> = ({ playerName }) => {
+export const WaitingRoom: React.FC<WaitingRoomProps> = ({ 
+  playerName, 
+  opponentStatus = 'connected', 
+  onWaitForOpponent 
+}) => {
   const [dots, setDots] = useState('');
   const [connectionPulse, setConnectionPulse] = useState(false);
   

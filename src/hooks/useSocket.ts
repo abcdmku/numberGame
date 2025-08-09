@@ -43,6 +43,8 @@ export const useSocket = () => {
     }
     return GamePhase.LOBBY;
   });
+  
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const [playerName, setPlayerName] = useState(() => {
     return sessionStorage.getItem('playerName') || '';
   });
@@ -281,8 +283,13 @@ export const useSocket = () => {
         setSessionId(data.sessionId);
         sessionStorage.setItem('gameSessionId', data.sessionId);
       }
-      setGamePhase(GamePhase.WAITING);
-      setError('');
+      
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setGamePhase(GamePhase.WAITING);
+        setError('');
+        setIsTransitioning(false);
+      }, 150);
     });
 
     socketInstance.on('gameFound', (data) => {
@@ -301,9 +308,15 @@ export const useSocket = () => {
         gameNumber: 1
       };
       setGameState(newGameState);
-      setGamePhase(GamePhase.SETUP);
+      
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setGamePhase(GamePhase.SETUP);
+        setError('');
+        setIsTransitioning(false);
+      }, 150);
+      
       sessionStorage.setItem('gameState', JSON.stringify(newGameState));
-      setError('');
     });
 
     socketInstance.on('opponentReconnected', (data) => {
@@ -332,8 +345,13 @@ export const useSocket = () => {
         sessionStorage.setItem('gameState', JSON.stringify(newGameState));
         return newGameState;
       });
-      setGamePhase(GamePhase.PLAYING);
-      setError('');
+      
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setGamePhase(GamePhase.PLAYING);
+        setError('');
+        setIsTransitioning(false);
+      }, 200);
     });
 
     socketInstance.on('guessMade', (data) => {
@@ -368,7 +386,12 @@ export const useSocket = () => {
         sessionStorage.setItem('gameState', JSON.stringify(newGameState));
         return newGameState;
       });
-      setGamePhase(GamePhase.ENDED);
+      
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setGamePhase(GamePhase.ENDED);
+        setIsTransitioning(false);
+      }, 300);
     });
 
     socketInstance.on('newGameStarted', (data) => {
@@ -386,11 +409,16 @@ export const useSocket = () => {
         })),
         potentialWinner: null
       }));
-      setGamePhase(GamePhase.SETUP);
-      setMyNumber('');
-      sessionStorage.removeItem('myNumber');
-      setError('');
-      setRematchState({ requested: false, opponentRequested: false });
+      
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setGamePhase(GamePhase.SETUP);
+        setMyNumber('');
+        sessionStorage.removeItem('myNumber');
+        setError('');
+        setRematchState({ requested: false, opponentRequested: false });
+        setIsTransitioning(false);
+      }, 250);
     });
 
     socketInstance.on('numberGenerated', (number) => {
@@ -504,6 +532,7 @@ export const useSocket = () => {
     rematchState,
     sessionId,
     isReconnecting,
+    isTransitioning,
     opponentStatus,
     joinLobby,
     setNumber,

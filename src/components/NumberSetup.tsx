@@ -10,6 +10,7 @@ interface NumberSetupProps {
   onGenerateRandom: () => void;
   myNumber: string;
   gameNumber: number;
+  opponentStatus?: 'connected' | 'disconnected' | 'reconnecting';
 }
 
 export const NumberSetup: React.FC<NumberSetupProps> = ({
@@ -18,7 +19,8 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
   onSetNumber,
   onGenerateRandom,
   myNumber,
-  gameNumber
+  gameNumber,
+  opponentStatus = 'connected'
 }) => {
   const [inputNumber, setInputNumber] = useState(myNumber);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,32 +79,51 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+          <div className={`bg-white/5 rounded-xl p-4 border border-white/10 transition-all duration-500 ${
+            me?.ready ? 'border-green-500/50 bg-green-500/10 shadow-lg shadow-green-500/10' : 'hover:bg-white/10 hover:border-white/20'
+          }`}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+              <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                me?.ready ? 'bg-green-400 shadow-lg shadow-green-400/50 scale-110' : 'bg-green-400'
+              }`}></div>
               <span className="text-white font-medium">{me?.name} (You)</span>
-              {me?.ready && <Check className="w-4 h-4 text-green-400" />}
+              {me?.ready && (
+                <Check className="w-4 h-4 text-green-400 animate-in zoom-in-50 duration-300" />
+              )}
             </div>
-            <p className="text-sm text-blue-200">
-              {me?.ready ? 'Number set and ready!' : 'Waiting for your number...'}
+            <p className="text-sm text-blue-200 transition-colors duration-300">
+              {me?.ready ? '✅ Number set and ready!' : 'Waiting for your number...'}
             </p>
           </div>
           
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+          <div className={`bg-white/5 rounded-xl p-4 border border-white/10 transition-all duration-500 ${
+            opponent?.ready ? 'border-purple-500/50 bg-purple-500/10 shadow-lg shadow-purple-500/10' : 'hover:bg-white/10 hover:border-white/20'
+          }`}>
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
+              <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                opponent?.ready ? 'bg-purple-400 shadow-lg shadow-purple-400/50 scale-110' : 'bg-purple-400'
+              }`}></div>
               <span className="text-white font-medium">{opponent?.name}</span>
-              {opponent?.ready && <Check className="w-4 h-4 text-green-400" />}
+              {opponent?.ready && (
+                <Check className="w-4 h-4 text-green-400 animate-in zoom-in-50 duration-300" />
+              )}
             </div>
-            <p className="text-sm text-blue-200">
-              {opponent?.ready ? 'Number set and ready!' : 'Waiting for their number...'}
+            <p className="text-sm text-blue-200 transition-colors duration-300">
+              {opponent?.ready ? '✅ Number set and ready!' : 'Waiting for their number...'}
             </p>
+            {opponentStatus === 'disconnected' && (
+              <div className="mt-2 text-xs text-orange-400 flex items-center gap-1">
+                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                Opponent disconnected
+              </div>
+            )}
           </div>
         </div>
 
         {!me?.ready && (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
               <label htmlFor="secretNumber" className="block text-sm font-medium text-blue-100 mb-2">
                 Your Secret Number
               </label>
@@ -181,8 +202,36 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
                   </>
                 )}
               </button>
+              </div>
+            </form>
+          </div>
+        )}
+        
+        {me?.ready && !opponent?.ready && (
+          <div className="text-center py-8 animate-in fade-in duration-500">
+            <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-500/20 rounded-full border border-blue-500/30 mb-4">
+              <div className="w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
+              <span className="text-blue-200 text-sm">Waiting for {opponent?.name} to set their number</span>
             </div>
-          </form>
+            <p className="text-blue-300 text-sm">The game will start automatically once both players are ready</p>
+          </div>
+        )}
+        
+        {me?.ready && opponent?.ready && (
+          <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-700">
+            <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-full border border-green-500/30 mb-4">
+              <Check className="w-5 h-5 text-green-400" />
+              <span className="text-white font-medium">Both players ready!</span>
+            </div>
+            <p className="text-green-300 text-sm">Starting the game...</p>
+            <div className="mt-4 flex justify-center">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          </div>
         )}
 
         <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">

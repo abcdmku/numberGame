@@ -21,6 +21,7 @@ function App() {
     rematchState,
     sessionId,
     isReconnecting,
+    isTransitioning,
     opponentStatus,
     joinLobby,
     setNumber,
@@ -71,9 +72,21 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-hidden">
       <ErrorDisplay error={error} onClose={() => setError('')} />
       <SocketDebugger socket={socketRef.current} />
+      
+      {/* Transition overlay */}
+      {isTransitioning && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 flex items-center justify-center">
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="text-white font-medium">Transitioning...</span>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Return to Lobby Confirmation Dialog */}
       {showReturnConfirm && (
@@ -112,69 +125,79 @@ function App() {
         </button>
       )}
 
-      {gamePhase === GamePhase.LOBBY && (
-        <Lobby onJoin={joinLobby} />
-      )}
-      
-      {gamePhase === GamePhase.WAITING && (
-        <>
-          <button
-            onClick={handleReturnToLobby}
-            className="fixed top-4 left-4 z-40 bg-white/10 backdrop-blur-md text-white p-3 rounded-xl hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center gap-2"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">Return to Lobby</span>
-          </button>
-          <WaitingRoom 
-            playerName={playerName} 
-            opponentStatus={opponentStatus}
-            onWaitForOpponent={waitForOpponent}
-          />
-        </>
-      )}
-      
-      {gamePhase === GamePhase.SETUP && (
-        <NumberSetup
-          players={gameState.players}
-          myId={myId}
-          onSetNumber={setNumber}
-          onGenerateRandom={generateRandomNumber}
-          myNumber={myNumber}
-          gameNumber={gameState.gameNumber}
-         opponentStatus={opponentStatus}
-        />
-      )}
-      
-      {gamePhase === GamePhase.PLAYING && (
-        <GameBoard
-          players={gameState.players}
-          myId={myId}
-          currentTurn={gameState.currentTurn || ''}
-          allGuesses={gameState.allGuesses}
-          onMakeGuess={makeGuess}
-          gameNumber={gameState.gameNumber}
-          gameState={gameState}
-          opponentStatus={opponentStatus}
-          playerName={playerName}
-        />
-      )}
-      
-      {gamePhase === GamePhase.ENDED && (
-        <GameResults
-          winner={gameState.winner || ''}
-          players={gameState.players}
-          myId={myId}
-          onPlayAgain={playAgain}
-          onReturnToLobby={handleReturnToLobby}
-          gameNumber={gameState.gameNumber}
-          rematchState={rematchState}
-          onRequestRematch={requestRematch}
-          onAcceptRematch={acceptRematch}
-          onJoinLobby={joinLobby}
-          playerName={playerName}
-          gameState={gameState}
-        />
-      )}
+      <div className={`transition-all duration-300 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+        {gamePhase === GamePhase.LOBBY && (
+          <div className="animate-in fade-in duration-500">
+            <Lobby onJoin={joinLobby} />
+          </div>
+        )}
+        
+        {gamePhase === GamePhase.WAITING && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <button
+              onClick={handleReturnToLobby}
+              className="fixed top-4 left-4 z-40 bg-white/10 backdrop-blur-md text-white p-3 rounded-xl hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center gap-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span className="hidden sm:inline">Return to Lobby</span>
+            </button>
+            <WaitingRoom 
+              playerName={playerName} 
+              opponentStatus={opponentStatus}
+              onWaitForOpponent={waitForOpponent}
+            />
+          </div>
+        )}
+        
+        {gamePhase === GamePhase.SETUP && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+            <NumberSetup
+              players={gameState.players}
+              myId={myId}
+              onSetNumber={setNumber}
+              onGenerateRandom={generateRandomNumber}
+              myNumber={myNumber}
+              gameNumber={gameState.gameNumber}
+             opponentStatus={opponentStatus}
+            />
+          </div>
+        )}
+        
+        {gamePhase === GamePhase.PLAYING && (
+          <div className="animate-in fade-in slide-in-from-left-4 duration-700">
+            <GameBoard
+              players={gameState.players}
+              myId={myId}
+              currentTurn={gameState.currentTurn || ''}
+              allGuesses={gameState.allGuesses}
+              onMakeGuess={makeGuess}
+              gameNumber={gameState.gameNumber}
+              gameState={gameState}
+              opponentStatus={opponentStatus}
+              playerName={playerName}
+            />
+          </div>
+        )}
+        
+        {gamePhase === GamePhase.ENDED && (
+          <div className="animate-in fade-in zoom-in-95 duration-700">
+            <GameResults
+              winner={gameState.winner || ''}
+              players={gameState.players}
+              myId={myId}
+              onPlayAgain={playAgain}
+              onReturnToLobby={handleReturnToLobby}
+              gameNumber={gameState.gameNumber}
+              rematchState={rematchState}
+              onRequestRematch={requestRematch}
+              onAcceptRematch={acceptRematch}
+              onJoinLobby={joinLobby}
+              playerName={playerName}
+              gameState={gameState}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
