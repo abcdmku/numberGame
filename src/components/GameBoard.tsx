@@ -126,19 +126,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       placeholder="12345"
                       maxLength={5}
                       required
-                    />
+                              isWin ? 'text-green-400 font-bold' : 'text-white'
                     <div className="mt-2 space-y-2">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           {guess.length > 0 && (
                             <>
                               {isValid ? (
-                                <CheckCircle className="w-4 h-4 text-green-400" />
+                                  ? 'bg-yellow-400 text-yellow-900 shadow-lg relative'
                               ) : (
                                 <XCircle className="w-4 h-4 text-red-400" />
                               )}
                               <span className={`text-xs ${isValid ? 'text-green-400' : 'text-red-400'}`}>
-                                {validationError || 'Ready to submit!'}
+                                {isWin ? (
+                                  <>
+                                    <Star className="w-6 h-6 absolute inset-0 text-yellow-600 fill-current" />
+                                    <span className="relative z-10 text-xs font-bold">5</span>
+                                  </>
+                                ) : (
+                                  guessData.feedback.correctPosition
+                                )}
                               </span>
                             </>
                           )}
@@ -212,19 +219,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                                 {guessData.turn}
                               </div>
                               <div className={`text-center font-mono text-lg tracking-wider ${
-                                isWin ? 'text-yellow-200 font-bold' : 'text-white'
+                                isWin ? 'text-green-400 font-bold' : 'text-white'
                               }`}>
                                 {guessData.guess}
                               </div>
                               <div className="text-center">
                                 <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
                                   isWin 
-                                    ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg'
+                                    ? 'bg-yellow-400 text-yellow-900 shadow-lg relative'
                                     : guessData.feedback.correctPosition > 0
                                     ? 'bg-green-500 text-white'
                                     : 'bg-gray-600 text-gray-300'
                                 }`}>
-                                  {isWin ? <Star className="w-3 h-3" /> : guessData.feedback.correctPosition}
+                                  {isWin ? (
+                                    <>
+                                      <Star className="w-6 h-6 absolute inset-0 text-yellow-600 fill-current" />
+                                      <span className="relative z-10 text-xs font-bold">5</span>
+                                    </>
+                                  ) : (
+                                    guessData.feedback.correctPosition
+                                  )}
                                 </span>
                               </div>
                               <div className="text-center">
