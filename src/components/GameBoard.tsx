@@ -219,12 +219,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                               <div className="text-center">
                                 <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
                                   isWin 
-                                    ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg' 
+                                    ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg'
                                     : guessData.feedback.correctPosition > 0
                                     ? 'bg-green-500 text-white'
                                     : 'bg-gray-600 text-gray-300'
                                 }`}>
-                                  {guessData.feedback.correctPosition}
+                                  {isWin ? <Star className="w-3 h-3" /> : guessData.feedback.correctPosition}
                                 </span>
                               </div>
                               <div className="text-center">
