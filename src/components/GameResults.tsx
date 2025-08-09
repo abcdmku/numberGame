@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Home, Crown, Users, Clock, Check, X, History, Star, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Trophy, Home, Crown, Users, Clock, Check, X, History, Star } from 'lucide-react';
 import { Player } from '../types/game';
 import { VersionDisplay } from './VersionDisplay';
 
@@ -168,12 +168,12 @@ export const GameResults: React.FC<GameResultsProps> = ({
                             <div className="text-center">
                               <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
                                 isWin 
-                                  ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg' 
+                                  ? 'bg-gradient-to-r from-yellow-400 to-orange-400 text-white shadow-lg'
                                   : guessData.feedback.correctPosition > 0
                                   ? 'bg-emerald-600 text-white'
                                   : 'bg-slate-600 text-slate-300'
                               }`}>
-                                {guessData.feedback.correctPosition}
+                                {isWin ? <Star className="w-3 h-3" /> : guessData.feedback.correctPosition}
                               </span>
                             </div>
                             <div className="text-center">
