@@ -75,29 +75,35 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-2 md:p-4">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-white mb-4">
-            Game {gameNumber} - Number Master
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
+            <span className="bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
+              Game {gameNumber}
+            </span>
+            <span className="block text-2xl font-semibold text-blue-200 mt-1 tracking-wide">Number Master</span>
           </h1>
-          <div className="flex items-center justify-center gap-6 text-blue-100 mb-4">
-            <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4" />
-              <span>{me?.name}: {me?.gamesWon ?? 0} wins</span>
+          <div className="flex items-center justify-center gap-8 text-blue-100 mb-6">
+            <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 backdrop-blur-sm">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              <span className="font-medium">{me?.name}: <span className="text-green-400 font-bold">{me?.gamesWon ?? 0}</span> wins</span>
             </div>
-            <div className="w-px h-4 bg-blue-400"></div>
-            <div className="flex items-center gap-2">
-              <Trophy className="w-4 h-4" />
-              <span>{opponent?.name}: {opponent?.gamesWon ?? 0} wins</span>
+            <div className="w-px h-6 bg-gradient-to-b from-transparent via-blue-400 to-transparent"></div>
+            <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 backdrop-blur-sm">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              <span className="font-medium">{opponent?.name}: <span className="text-purple-400 font-bold">{opponent?.gamesWon ?? 0}</span> wins</span>
             </div>
           </div>
           
           {/* Game Progress Overview */}
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-            <div className="text-sm text-blue-200 mb-3">Game Progress</div>
+          <div className="bg-gradient-to-br from-white/5 via-white/10 to-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-sm shadow-lg shadow-white/5">
+            <div className="text-sm text-blue-200/90 mb-4 font-semibold tracking-wide flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+              Game Progress
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-300">{myGuesses.length}</div>
-                <div className="text-xs text-blue-200">Your Guesses</div>
+                <div className="text-3xl font-bold text-green-300 tracking-tight">{myGuesses.length}</div>
+                <div className="text-xs text-blue-200/80 font-medium tracking-wide uppercase">Your Guesses</div>
                 <div className="w-full bg-gray-600 rounded-full h-1.5 mt-2">
                   <div 
                     className="h-1.5 bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
@@ -106,8 +112,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-300">{opponentGuesses.length}</div>
-                <div className="text-xs text-blue-200">{opponent?.name}'s Guesses</div>
+                <div className="text-3xl font-bold text-purple-300 tracking-tight">{opponentGuesses.length}</div>
+                <div className="text-xs text-blue-200/80 font-medium tracking-wide uppercase">{opponent?.name}'s Guesses</div>
                 <div className="w-full bg-gray-600 rounded-full h-1.5 mt-2">
                   <div 
                     className="h-1.5 bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500"

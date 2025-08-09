@@ -92,14 +92,27 @@ export const GameResults: React.FC<GameResultsProps> = ({
           )}
         </div>
 
-        <h2 className="text-3xl font-bold text-white mb-4">
-          Game {gameNumber} Results
-        </h2>
+        <div className="text-center mb-10">
+          <h2 className="text-4xl font-bold text-white mb-4 tracking-tight">
+            <span className="bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
+              Game {gameNumber}
+            </span>
+            <span className="block text-2xl font-semibold text-blue-200 mt-2 tracking-wide">Results</span>
+          </h2>
 
-        <div className={`text-2xl font-semibold mb-6 ${
-          gameState.isDraw ? 'text-purple-300' : isWinner ? 'text-yellow-300' : 'text-blue-300'
-        }`}>
-          {gameState.isDraw ? '🤝 It\'s a Draw!' : isWinner ? '🎉 You Won!' : `${winner} Wins!`}
+          <div className={`text-5xl font-bold mb-6 tracking-tight ${
+            gameState.isDraw ? 'text-purple-300' : isWinner ? 'text-yellow-300' : 'text-blue-300'
+          }`}>
+            <span className={`bg-gradient-to-r bg-clip-text text-transparent ${
+              gameState.isDraw 
+                ? 'from-purple-300 via-purple-100 to-purple-300' 
+                : isWinner 
+                  ? 'from-yellow-300 via-yellow-100 to-yellow-300'
+                  : 'from-blue-300 via-blue-100 to-blue-300'
+            }`}>
+              {gameState.isDraw ? '🤝 It\'s a Draw!' : isWinner ? '🎉 You Won!' : `${winner} Wins!`}
+            </span>
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 md:gap-4 mb-8">

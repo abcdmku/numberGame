@@ -71,11 +71,14 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 md:flex md:items-center md:justify-center p-4">
       <div className="bg-transparent md:bg-white/10 md:backdrop-blur-md rounded-none md:rounded-3xl p-6 md:p-8 w-full md:max-w-2xl md:shadow-2xl border-0 md:border md:border-white/20 min-h-screen md:min-h-0 flex flex-col justify-center">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-white mb-2">
-            Game {gameNumber} - Number Setup
+        <div className="text-center mb-10">
+          <h2 className="text-4xl font-bold text-white mb-4 tracking-tight">
+            <span className="bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
+              Game {gameNumber}
+            </span>
+            <span className="block text-2xl font-semibold text-blue-200 mt-2 tracking-wide">Number Setup</span>
           </h2>
-          <p className="text-blue-100">Create your secret 5-digit number</p>
+          <p className="text-blue-100/90 text-lg font-medium">Create your secret 5-digit number</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -124,7 +127,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-              <label htmlFor="secretNumber" className="block text-sm font-medium text-blue-100 mb-2">
+              <label htmlFor="secretNumber" className="block text-sm font-semibold text-blue-100 mb-3 tracking-wide uppercase text-xs opacity-90">
                 Your Secret Number
               </label>
               <input
@@ -256,12 +259,24 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
           </div>
         )}
 
-        <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
-          <h3 className="text-lg font-semibold text-white mb-2">Rules Reminder</h3>
-          <ul className="text-sm text-blue-100 space-y-1">
-            <li>• Must be exactly 5 digits</li>
-            <li>• All digits must be unique (no repeats)</li>
-            <li>• Examples: 12345, 01234, 98765, 04681</li>
+        <div className="mt-10 p-6 bg-gradient-to-br from-white/5 via-white/10 to-white/5 rounded-2xl border border-white/10 backdrop-blur-sm hover:shadow-lg hover:shadow-white/5 transition-all duration-300">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+            Rules Reminder
+          </h3>
+          <ul className="text-sm text-blue-100/90 space-y-2 leading-relaxed">
+            <li className="flex items-start gap-3">
+              <span className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 flex-shrink-0"></span>
+              <span>Must be exactly <strong className="text-white">5 digits</strong></span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="w-1.5 h-1.5 bg-purple-400 rounded-full mt-2 flex-shrink-0"></span>
+              <span>All digits must be <strong className="text-white">unique</strong> (no repeats)</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></span>
+              <span>Examples: <code className="bg-white/10 px-2 py-1 rounded text-blue-200 font-mono text-xs">12345</code>, <code className="bg-white/10 px-2 py-1 rounded text-blue-200 font-mono text-xs">01234</code>, <code className="bg-white/10 px-2 py-1 rounded text-blue-200 font-mono text-xs">98765</code></span>
+            </li>
           </ul>
           <div className="mt-4 pt-3 border-t border-white/10">
             <h4 className="text-sm font-medium text-white mb-2">Feedback System:</h4>
