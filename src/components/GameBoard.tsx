@@ -92,9 +92,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
           {/* Game Input */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 order-2 lg:order-1">
             <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-2xl p-4 md:p-6 shadow-xl border-0 md:border border-white/20">
               <div className="mb-6">
                 <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
@@ -125,12 +125,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     </label>
                     <input
                       type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       id="guess"
                       value={guess}
                       onChange={(e) => setGuess(e.target.value.replace(/\D/g, '').slice(0, 5))}
                       onFocus={() => setFocusedInput(true)}
                       onBlur={() => setFocusedInput(false)}
-                      className={`w-full px-4 py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white text-center text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none transition-all duration-300 transform ${
+                      className={`w-full px-4 py-4 md:py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white text-center text-3xl md:text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none transition-all duration-300 transform touch-manipulation ${
                         focusedInput
                           ? 'border-blue-400 ring-2 ring-blue-400/30 scale-[1.02] bg-white/25 shadow-lg shadow-blue-500/20'
                           : 'border-white/30 hover:border-white/50 hover:bg-white/25'
@@ -170,10 +172,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <button
                     type="submit"
                     disabled={!isValid || isSubmitting}
-                    className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform ${
+                    className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform touch-manipulation ${
                       !isValid || isSubmitting
                         ? 'opacity-50 scale-95'
-                        : 'hover:from-blue-600 hover:to-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95'
+                        : 'hover:from-blue-600 hover:to-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 md:active:scale-95 active:scale-[0.97]'
                     }`}
                   >
                     {isSubmitting ? (
@@ -192,31 +194,38 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               )}
 
               {!isMyTurn && (
-                <div className="text-center p-8">
-                  <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="text-center p-6 md:p-8">
+                  <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4 pulse">
                     <Target className="w-8 h-8 text-orange-300" />
                   </div>
-                  <p className="text-blue-100">
+                  <p className="text-blue-100 text-base md:text-sm">
                     Waiting for {opponent?.name} to make their guess...
                   </p>
+                  <div className="mt-4 flex justify-center">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
           {/* Game History */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 order-1 lg:order-2">
             <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-2xl p-4 md:p-6 shadow-xl border-0 md:border border-white/20">
               <div className="flex items-center gap-2 mb-6">
                 <History className="w-5 h-5 text-blue-300" />
                 <h3 className="text-xl font-semibold text-white">Game History</h3>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                 {/* My Guesses */}
                 <div>
                   <h4 className="text-lg font-medium text-green-300 mb-4">Your Guesses</h4>
-                  <div className="overflow-y-auto">
+                  <div className="overflow-y-auto max-h-64 md:max-h-96">
                     {myGuesses.length === 0 ? (
                       <p className="text-blue-200 text-sm italic p-4 text-center">No guesses yet</p>
                     ) : (
@@ -281,7 +290,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <h4 className="text-lg font-medium text-purple-300 mb-4">
                     {opponent?.name}'s Guesses
                   </h4>
-                  <div className="overflow-y-auto">
+                  <div className="overflow-y-auto max-h-64 md:max-h-96">
                     {opponentGuesses.length === 0 ? (
                       <p className="text-blue-200 text-sm italic p-4 text-center">No guesses yet</p>
                     ) : (

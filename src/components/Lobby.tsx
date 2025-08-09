@@ -46,7 +46,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
               onChange={(e) => setName(e.target.value)}
               onFocus={() => setFocusedInput(true)}
               onBlur={() => setFocusedInput(false)}
-              className={`w-full px-4 py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white placeholder-blue-200 focus:outline-none transition-all duration-300 transform ${
+              className={`w-full px-4 py-4 md:py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white placeholder-blue-200 focus:outline-none transition-all duration-300 transform touch-manipulation text-lg md:text-base ${
                 focusedInput 
                   ? 'border-blue-400 ring-2 ring-blue-400/30 scale-[1.02] bg-white/25' 
                   : 'border-white/30 hover:border-white/50 hover:bg-white/25'
@@ -60,10 +60,10 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
           <button
             type="submit"
             disabled={!name.trim() || isSubmitting}
-            className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform ${
+            className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform touch-manipulation ${
               !name.trim() || isSubmitting
                 ? 'opacity-50 scale-95'
-                : 'hover:from-blue-600 hover:to-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95'
+                : 'hover:from-blue-600 hover:to-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 md:active:scale-95 active:scale-[0.97]'
             }`}
           >
             {isSubmitting ? (

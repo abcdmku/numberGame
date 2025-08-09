@@ -129,12 +129,14 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
               </label>
               <input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 id="secretNumber"
                 value={inputNumber}
                 onChange={(e) => setInputNumber(e.target.value.replace(/\D/g, '').slice(0, 5))}
                 onFocus={() => setFocusedInput(true)}
                 onBlur={() => setFocusedInput(false)}
-                className={`w-full px-4 py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white text-center text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none transition-all duration-300 transform ${
+                className={`w-full px-4 py-4 md:py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white text-center text-3xl md:text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none transition-all duration-300 transform touch-manipulation ${
                   focusedInput
                     ? 'border-blue-400 ring-2 ring-blue-400/30 scale-[1.02] bg-white/25 shadow-lg shadow-blue-500/20'
                     : 'border-white/30 hover:border-white/50 hover:bg-white/25'
@@ -171,11 +173,11 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col gap-4 sm:gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={handleGenerate}
-                className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-3 px-6 rounded-xl font-semibold hover:bg-white/30 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 flex items-center justify-center gap-2 group hover:shadow-lg"
+                className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-4 md:py-3 px-6 rounded-xl font-semibold hover:bg-white/30 hover:scale-105 active:scale-95 md:active:scale-95 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 flex items-center justify-center gap-2 group hover:shadow-lg touch-manipulation"
               >
                 <Shuffle className="w-5 h-5 group-hover:rotate-180 transition-transform duration-300" />
                 Generate Random
@@ -184,10 +186,10 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
               <button
                 type="submit"
                 disabled={!isValid || isSubmitting}
-                className={`w-full sm:flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform ${
+                className={`w-full sm:flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform touch-manipulation ${
                   !isValid || isSubmitting
                     ? 'opacity-50 scale-95'
-                    : 'hover:from-blue-600 hover:to-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95'
+                    : 'hover:from-blue-600 hover:to-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 md:active:scale-95 active:scale-[0.97]'
                 }`}
               >
                 {isSubmitting ? (

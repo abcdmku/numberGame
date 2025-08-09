@@ -102,7 +102,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
           {gameState.isDraw ? '🤝 It\'s a Draw!' : isWinner ? '🎉 You Won!' : `${winner} Wins!`}
         </div>
 
-        <div className="grid md:grid-cols-2 gap-4 mb-8">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-4 mb-8">
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <div className="flex items-center justify-center gap-2 mb-2">
               <div className="w-3 h-3 bg-green-400 rounded-full"></div>
@@ -136,7 +136,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
               <h3 className="text-xl font-semibold text-white">Complete Game History</h3>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6 md:gap-4">
               {/* My Guesses */}
               <div>
                 <h4 className="text-lg font-medium text-green-300 mb-4">{me?.name} (You)</h4>
@@ -277,17 +277,17 @@ export const GameResults: React.FC<GameResultsProps> = ({
               <p className="text-sm text-blue-200 text-center mb-4">
                 {opponent?.name} wants to play another game. Accept?
               </p>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col gap-4 sm:gap-3 sm:flex-row">
                 <button
                   onClick={onAcceptRematch}
-                  className="w-full sm:flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full sm:flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2 touch-manipulation active:scale-95 md:active:scale-95 active:scale-[0.97]"
                 >
                   <Check className="w-5 h-5" />
                   Accept Rematch
                 </button>
                 <button
                   onClick={onReturnToLobby}
-                  className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-3 px-6 rounded-xl font-semibold hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-4 md:py-3 px-6 rounded-xl font-semibold hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2 touch-manipulation active:scale-95 md:active:scale-95 active:scale-[0.97]"
                 >
                   <X className="w-5 h-5" />
                   Decline & Leave
@@ -319,7 +319,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
             
             <button
               onClick={onReturnToLobby}
-              className="w-full bg-white/10 backdrop-blur-sm text-white py-2 px-4 rounded-lg font-medium hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full bg-white/10 backdrop-blur-sm text-white py-3 md:py-2 px-4 rounded-lg font-medium hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2 touch-manipulation active:scale-95"
             >
               <Home className="w-4 h-4" />
               Cancel & Find New Opponent
@@ -329,10 +329,10 @@ export const GameResults: React.FC<GameResultsProps> = ({
 
         {/* Show initial options */}
         {!rematchState.requested && !rematchState.opponentRequested && (
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col gap-4 sm:flex-row sm:gap-4 justify-center">
             <button
               onClick={onRequestRematch}
-              className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2 touch-manipulation active:scale-95 md:active:scale-95 active:scale-[0.97]"
             >
               <Users className="w-5 h-5" />
               Request Rematch
@@ -340,7 +340,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
             
             <button
               onClick={() => onJoinLobby(playerName)}
-              className="w-full sm:w-auto bg-white/20 backdrop-blur-sm text-white py-3 px-6 rounded-xl font-semibold hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto bg-white/20 backdrop-blur-sm text-white py-4 md:py-3 px-6 rounded-xl font-semibold hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2 touch-manipulation active:scale-95 md:active:scale-95 active:scale-[0.97]"
             >
               <Home className="w-5 h-5" />
               Find New Opponent

@@ -72,7 +72,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden">
+    <div className="min-h-screen overflow-hidden select-none">
       <ErrorDisplay error={error} onClose={() => setError('')} />
       <SocketDebugger socket={socketRef.current} />
       
