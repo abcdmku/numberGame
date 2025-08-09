@@ -76,10 +76,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-2 md:p-4">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="text-3xl font-bold text-white mb-4">
             Game {gameNumber} - Number Master
           </h1>
-          <div className="flex items-center justify-center gap-4 text-blue-100">
+          <div className="flex items-center justify-center gap-6 text-blue-100 mb-4">
             <div className="flex items-center gap-2">
               <Trophy className="w-4 h-4" />
               <span>{me?.name}: {me?.gamesWon ?? 0} wins</span>
@@ -88,6 +88,33 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <div className="flex items-center gap-2">
               <Trophy className="w-4 h-4" />
               <span>{opponent?.name}: {opponent?.gamesWon ?? 0} wins</span>
+            </div>
+          </div>
+          
+          {/* Game Progress Overview */}
+          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
+            <div className="text-sm text-blue-200 mb-3">Game Progress</div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-300">{myGuesses.length}</div>
+                <div className="text-xs text-blue-200">Your Guesses</div>
+                <div className="w-full bg-gray-600 rounded-full h-1.5 mt-2">
+                  <div 
+                    className="h-1.5 bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min((myGuesses.length / 10) * 100, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-300">{opponentGuesses.length}</div>
+                <div className="text-xs text-blue-200">{opponent?.name}'s Guesses</div>
+                <div className="w-full bg-gray-600 rounded-full h-1.5 mt-2">
+                  <div 
+                    className="h-1.5 bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min((opponentGuesses.length / 10) * 100, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -227,7 +254,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <h4 className="text-lg font-medium text-green-300 mb-4">Your Guesses</h4>
                   <div className="overflow-y-auto max-h-64 md:max-h-96">
                     {myGuesses.length === 0 ? (
-                      <p className="text-blue-200 text-sm italic p-4 text-center">No guesses yet</p>
+                      <div className="text-center p-6">
+                        <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <Target className="w-6 h-6 text-green-300" />
+                        </div>
+                        <p className="text-blue-200 text-sm italic">No guesses yet</p>
+                        <p className="text-xs text-blue-300 mt-1">Make your first guess!</p>
+                      </div>
                     ) : (
                       <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
                         <div className="grid grid-cols-4 gap-px bg-white/10 text-xs font-medium text-blue-200 p-2">
@@ -287,12 +320,30 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
                 {/* Opponent Guesses */}
                 <div>
-                  <h4 className="text-lg font-medium text-purple-300 mb-4">
-                    {opponent?.name}'s Guesses
-                  </h4>
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-lg font-medium text-purple-300">
+                      {opponent?.name}'s Guesses
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center">
+                        <span className="text-xs font-bold text-purple-300">{opponentGuesses.length}</span>
+                      </div>
+                      {opponentGuesses.some(g => g.feedback.correctPosition === 5) && (
+                        <div className="w-5 h-5 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                          <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
                   <div className="overflow-y-auto max-h-64 md:max-h-96">
                     {opponentGuesses.length === 0 ? (
-                      <p className="text-blue-200 text-sm italic p-4 text-center">No guesses yet</p>
+                      <div className="text-center p-6">
+                        <div className="w-12 h-12 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <Target className="w-6 h-6 text-purple-300" />
+                        </div>
+                        <p className="text-blue-200 text-sm italic">No guesses yet</p>
+                        <p className="text-xs text-blue-300 mt-1">Waiting for {opponent?.name}...</p>
+                      </div>
                     ) : (
                       <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
                         <div className="grid grid-cols-4 gap-px bg-white/10 text-xs font-medium text-blue-200 p-2">

@@ -103,27 +103,81 @@ export const GameResults: React.FC<GameResultsProps> = ({
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 md:gap-4 mb-8">
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+          <div className={`bg-white/5 rounded-xl p-4 border transition-all duration-300 ${
+            isWinner ? 'border-green-500/50 bg-green-500/10' : 'border-white/10'
+          }`}>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className={`w-4 h-4 rounded-full ${
+                isWinner ? 'bg-green-400 shadow-lg shadow-green-400/30' : 'bg-green-400'
+              }`}></div>
               <span className="text-white font-medium">{me?.name} (You)</span>
+              {isWinner && <Crown className="w-4 h-4 text-yellow-400" />}
             </div>
-            <div className="text-blue-200 text-sm space-y-1">
-              <p>Number: {me?.number}</p>
-              <p>Guesses made: {me?.guesses?.length || 0}</p>
-              <p>Games won: {me?.gamesWon || 0}</p>
+            <div className="space-y-2">
+              <div className="bg-white/10 rounded-lg p-2">
+                <div className="text-xs text-blue-200 mb-1">Your Number</div>
+                <div className="text-lg font-mono text-white tracking-wider">{me?.number}</div>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-blue-200">Guesses made:</span>
+                <span className="text-white font-semibold">{me?.guesses?.length || 0}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-blue-200">Total wins:</span>
+                <span className="text-green-400 font-semibold">{me?.gamesWon || 0}</span>
+              </div>
+              {(me?.guesses?.length || 0) > 0 && (
+                <div className="mt-2">
+                  <div className="text-xs text-blue-200 mb-1">Efficiency</div>
+                  <div className="w-full bg-gray-600 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-500 ${
+                        isWinner ? 'bg-gradient-to-r from-green-500 to-yellow-400' : 'bg-gradient-to-r from-green-500 to-green-400'
+                      }`}
+                      style={{ width: `${Math.max(20, 100 - ((me?.guesses?.length || 0) * 10))}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
-          <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <div className="w-3 h-3 bg-purple-400 rounded-full"></div>
+          <div className={`bg-white/5 rounded-xl p-4 border transition-all duration-300 ${
+            !isWinner && !gameState.isDraw ? 'border-purple-500/50 bg-purple-500/10' : 'border-white/10'
+          }`}>
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className={`w-4 h-4 rounded-full ${
+                !isWinner && !gameState.isDraw ? 'bg-purple-400 shadow-lg shadow-purple-400/30' : 'bg-purple-400'
+              }`}></div>
               <span className="text-white font-medium">{opponent?.name}</span>
+              {!isWinner && !gameState.isDraw && <Crown className="w-4 h-4 text-yellow-400" />}
             </div>
-            <div className="text-blue-200 text-sm space-y-1">
-              <p>Number: {opponent?.number}</p>
-              <p>Guesses made: {opponent?.guesses?.length || 0}</p>
-              <p>Games won: {opponent?.gamesWon || 0}</p>
+            <div className="space-y-2">
+              <div className="bg-white/10 rounded-lg p-2">
+                <div className="text-xs text-blue-200 mb-1">Their Number</div>
+                <div className="text-lg font-mono text-white tracking-wider">{opponent?.number}</div>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-blue-200">Guesses made:</span>
+                <span className="text-white font-semibold">{opponent?.guesses?.length || 0}</span>
+              </div>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-blue-200">Total wins:</span>
+                <span className="text-purple-400 font-semibold">{opponent?.gamesWon || 0}</span>
+              </div>
+              {(opponent?.guesses?.length || 0) > 0 && (
+                <div className="mt-2">
+                  <div className="text-xs text-blue-200 mb-1">Efficiency</div>
+                  <div className="w-full bg-gray-600 rounded-full h-2">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-500 ${
+                        !isWinner && !gameState.isDraw ? 'bg-gradient-to-r from-purple-500 to-yellow-400' : 'bg-gradient-to-r from-purple-500 to-purple-400'
+                      }`}
+                      style={{ width: `${Math.max(20, 100 - ((opponent?.guesses?.length || 0) * 10))}%` }}
+                    ></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
