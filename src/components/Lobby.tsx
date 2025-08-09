@@ -46,6 +46,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
               onChange={(e) => setName(e.target.value)}
               onFocus={() => setFocusedInput(true)}
               onBlur={() => setFocusedInput(false)}
+              aria-label="Enter your player name"
+              aria-describedby="name-input-description"
+              autoComplete="nickname"
               className={`w-full px-4 py-4 md:py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white placeholder-blue-200 focus:outline-none transition-all duration-300 transform touch-manipulation text-lg md:text-base ${
                 focusedInput 
                   ? 'border-blue-400 ring-2 ring-blue-400/30 scale-[1.02] bg-white/25' 
@@ -60,6 +63,8 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
           <button
             type="submit"
             disabled={!name.trim() || isSubmitting}
+            aria-label={isSubmitting ? 'Joining game, please wait' : 'Join the multiplayer game'}
+            aria-describedby="join-button-description"
             className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform touch-manipulation ${
               !name.trim() || isSubmitting
                 ? 'opacity-50 scale-95'
@@ -82,10 +87,18 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
             )}
           </button>
         </form>
+        
+        {/* Screen reader descriptions */}
+        <div id="name-input-description" className="sr-only">
+          Enter a unique player name to join the multiplayer number guessing game
+        </div>
+        <div id="join-button-description" className="sr-only">
+          Click to enter the game lobby and find an opponent to play against
+        </div>
 
-        <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 group">
-          <h3 className="text-lg font-semibold text-white mb-2 flex items-center gap-2 group-hover:text-blue-200 transition-colors">
-            <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
+        <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300 group" role="region" aria-labelledby="how-to-play-heading">
+          <h3 id="how-to-play-heading" className="text-lg font-semibold text-white mb-2 flex items-center gap-2 group-hover:text-blue-200 transition-colors">
+            <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" aria-hidden="true" />
             How to Play
           </h3>
           <ul className="text-sm text-blue-100 space-y-1">

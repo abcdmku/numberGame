@@ -136,6 +136,10 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
                 onChange={(e) => setInputNumber(e.target.value.replace(/\D/g, '').slice(0, 5))}
                 onFocus={() => setFocusedInput(true)}
                 onBlur={() => setFocusedInput(false)}
+                aria-label="Enter your secret 5-digit number"
+                aria-describedby="number-validation-status number-requirements"
+                aria-invalid={inputNumber.length > 0 && !isValid}
+                autoComplete="off"
                 className={`w-full px-4 py-4 md:py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white text-center text-3xl md:text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none transition-all duration-300 transform touch-manipulation ${
                   focusedInput
                     ? 'border-blue-400 ring-2 ring-blue-400/30 scale-[1.02] bg-white/25 shadow-lg shadow-blue-500/20'
@@ -151,11 +155,11 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
                     {inputNumber.length > 0 && (
                       <>
                         {isValid ? (
-                          <CheckCircle className="w-4 h-4 text-green-400" />
+                          <CheckCircle className="w-4 h-4 text-green-400" aria-hidden="true" />
                         ) : (
-                          <XCircle className="w-4 h-4 text-red-400" />
+                          <XCircle className="w-4 h-4 text-red-400" aria-hidden="true" />
                         )}
-                        <span className={`text-xs ${isValid ? 'text-green-400' : 'text-red-400'}`}>
+                        <span id="number-validation-status" className={`text-xs ${isValid ? 'text-green-400' : 'text-red-400'}`} role="status" aria-live="polite">
                           {validationError || 'Perfect! Ready to play'}
                         </span>
                       </>
@@ -166,7 +170,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
                   </span>
                 </div>
                 {inputNumber.length === 0 && (
-                  <p className="text-xs text-blue-200">
+                  <p id="number-requirements" className="text-xs text-blue-200">
                     Enter 5 unique digits (0-9)
                   </p>
                 )}
@@ -177,6 +181,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
               <button
                 type="button"
                 onClick={handleGenerate}
+                aria-label="Generate a random 5-digit number with unique digits"
                 className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-4 md:py-3 px-6 rounded-xl font-semibold hover:bg-white/30 hover:scale-105 active:scale-95 md:active:scale-95 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 flex items-center justify-center gap-2 group hover:shadow-lg touch-manipulation"
               >
                 <Shuffle className="w-5 h-5 group-hover:rotate-180 transition-transform duration-300" />
@@ -186,6 +191,8 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
               <button
                 type="submit"
                 disabled={!isValid || isSubmitting}
+                aria-label={isSubmitting ? 'Setting your number, please wait' : 'Confirm your secret number and ready up'}
+                aria-describedby={!isValid && inputNumber.length > 0 ? 'number-validation-status' : undefined}
                 className={`w-full sm:flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform touch-manipulation ${
                   !isValid || isSubmitting
                     ? 'opacity-50 scale-95'

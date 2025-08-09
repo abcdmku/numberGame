@@ -159,6 +159,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       onChange={(e) => setGuess(e.target.value.replace(/\D/g, '').slice(0, 5))}
                       onFocus={() => setFocusedInput(true)}
                       onBlur={() => setFocusedInput(false)}
+                      aria-label="Enter your guess for the opponent's number"
+                      aria-describedby="guess-validation-status guess-requirements"
+                      aria-invalid={guess.length > 0 && !isValid}
+                      autoComplete="off"
                       className={`w-full px-4 py-4 md:py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white text-center text-3xl md:text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none transition-all duration-300 transform touch-manipulation ${
                         focusedInput
                           ? 'border-blue-400 ring-2 ring-blue-400/30 scale-[1.02] bg-white/25 shadow-lg shadow-blue-500/20'
@@ -178,7 +182,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                               ) : (
                                 <XCircle className="w-4 h-4 text-red-400" />
                               )}
-                              <span className={`text-xs ${isValid ? 'text-green-400' : 'text-red-400'}`}>
+                              <span id="guess-validation-status" className={`text-xs ${isValid ? 'text-green-400' : 'text-red-400'}`} role="status" aria-live="polite">
                                 {isValid ? 'Valid guess' : validationError}
                               </span>
                             </>
@@ -189,7 +193,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                         </span>
                       </div>
                       {guess.length === 0 && (
-                        <p className="text-xs text-blue-200">
+                        <p id="guess-requirements" className="text-xs text-blue-200">
                           Enter 5 unique digits
                         </p>
                       )}
@@ -199,6 +203,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <button
                     type="submit"
                     disabled={!isValid || isSubmitting}
+                    aria-label={isSubmitting ? 'Submitting your guess, please wait' : 'Submit your guess'}
+                    aria-describedby={!isValid && guess.length > 0 ? 'guess-validation-status' : undefined}
                     className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform touch-manipulation ${
                       !isValid || isSubmitting
                         ? 'opacity-50 scale-95'

@@ -89,6 +89,21 @@ function App() {
 
   return (
     <div className="min-h-screen overflow-hidden select-none">
+      {/* Screen reader only styles */}
+      <style jsx global>{`
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+      `}</style>
+      
       <ErrorDisplay error={error} onClose={() => setError('')} />
       <SocketDebugger socket={socketRef.current} />
       
