@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shuffle, Check, Users, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Shuffle, Check, Users, AlertCircle, CheckCircle, XCircle, Zap } from 'lucide-react';
 import { Player } from '../types/game';
 import { VersionDisplay } from './VersionDisplay';
 
@@ -21,6 +21,8 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
   gameNumber
 }) => {
   const [inputNumber, setInputNumber] = useState(myNumber);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusedInput, setFocusedInput] = useState(false);
   const me = players.find(p => p.id === myId);
   const opponent = players.find(p => p.id !== myId);
 
@@ -45,8 +47,11 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateNumber(inputNumber)) {
-      onSetNumber(inputNumber);
+    if (validateNumber(inputNumber) && !isSubmitting) {
+      setIsSubmitting(true);
+      setTimeout(() => {
+        onSetNumber(inputNumber);
+      }, 200);
     }
   };
 
@@ -106,7 +111,13 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
                 id="secretNumber"
                 value={inputNumber}
                 onChange={(e) => setInputNumber(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                className="w-full px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white text-center text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                onFocus={() => setFocusedInput(true)}
+                onBlur={() => setFocusedInput(false)}
+                className={`w-full px-4 py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white text-center text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none transition-all duration-300 transform ${
+                  focusedInput
+                    ? 'border-blue-400 ring-2 ring-blue-400/30 scale-[1.02] bg-white/25 shadow-lg shadow-blue-500/20'
+                    : 'border-white/30 hover:border-white/50 hover:bg-white/25'
+                }`}
                 placeholder="12345"
                 maxLength={5}
                 required
@@ -143,19 +154,32 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
               <button
                 type="button"
                 onClick={handleGenerate}
-                className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-3 px-6 rounded-xl font-semibold hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2"
+                className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-3 px-6 rounded-xl font-semibold hover:bg-white/30 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 flex items-center justify-center gap-2 group hover:shadow-lg"
               >
-                <Shuffle className="w-5 h-5" />
+                <Shuffle className="w-5 h-5 group-hover:rotate-180 transition-transform duration-300" />
                 Generate Random
               </button>
               
               <button
                 type="submit"
-                disabled={!isValid}
-                className="w-full sm:flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                disabled={!isValid || isSubmitting}
+                className={`w-full sm:flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform ${
+                  !isValid || isSubmitting
+                    ? 'opacity-50 scale-95'
+                    : 'hover:from-blue-600 hover:to-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95'
+                }`}
               >
-                <Check className="w-5 h-5" />
-                Set Number
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Setting...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-5 h-5" />
+                    Set Number
+                  </>
+                )}
               </button>
             </div>
           </form>

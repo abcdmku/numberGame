@@ -5,7 +5,8 @@
       "Bash(timeout 10s npm run server)",
       "Bash(node:*)",
       "Bash(npx tsc:*)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

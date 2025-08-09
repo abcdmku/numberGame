@@ -27,6 +27,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   playerName
 }) => {
   const [guess, setGuess] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [focusedInput, setFocusedInput] = useState(false);
   
   const me = players.find(p => p.id === myId);
   const opponent = players.find(p => p.id !== myId);
@@ -44,9 +46,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateGuess(guess) && isMyTurn) {
-      onMakeGuess(guess);
-      setGuess('');
+    if (validateGuess(guess) && isMyTurn && !isSubmitting) {
+      setIsSubmitting(true);
+      setTimeout(() => {
+        onMakeGuess(guess);
+        setGuess('');
+        setIsSubmitting(false);
+      }, 200);
     }
   };
 
@@ -122,7 +128,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       id="guess"
                       value={guess}
                       onChange={(e) => setGuess(e.target.value.replace(/\D/g, '').slice(0, 5))}
-                      className="w-full px-4 py-3 bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl text-white text-center text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                      onFocus={() => setFocusedInput(true)}
+                      onBlur={() => setFocusedInput(false)}
+                      className={`w-full px-4 py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white text-center text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none transition-all duration-300 transform ${
+                        focusedInput
+                          ? 'border-blue-400 ring-2 ring-blue-400/30 scale-[1.02] bg-white/25 shadow-lg shadow-blue-500/20'
+                          : 'border-white/30 hover:border-white/50 hover:bg-white/25'
+                      }`}
                       placeholder="12345"
                       maxLength={5}
                       required
@@ -157,11 +169,24 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
                   <button
                     type="submit"
-                    disabled={!isValid}
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    disabled={!isValid || isSubmitting}
+                    className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform ${
+                      !isValid || isSubmitting
+                        ? 'opacity-50 scale-95'
+                        : 'hover:from-blue-600 hover:to-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95'
+                    }`}
                   >
-                    <Send className="w-5 h-5" />
-                    Make Guess
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5" />
+                        Make Guess
+                      </>
+                    )}
                   </button>
                 </form>
               )}
