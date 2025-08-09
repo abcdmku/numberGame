@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Home, Crown, Users, Clock, Check, X, History } from 'lucide-react';
+import { Trophy, Home, Crown, Users, Clock, Check, X, History, Star, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { Player } from '../types/game';
 import { VersionDisplay } from './VersionDisplay';
 
