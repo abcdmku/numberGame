@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { GameState, Player, GuessData, GamePhase } from '../types/game';
+import { useSound } from './useSound';
 
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
+  const { playConnect, playDisconnect, playSuccess, playError, playNotification, playGameStart, playGameWin, playGameLose } = useSound();
   
   const [sessionId, setSessionId] = useState<string | null>(() => {
     // Generate a unique session ID for this browser tab/window
@@ -200,6 +202,7 @@ export const useSocket = () => {
     socketInstance.on('connect', () => {
       console.log('Socket connected');
       setIsReconnecting(false);
+      playConnect();
     });
 
     socketInstance.on('disconnect', (reason) => {
@@ -208,6 +211,7 @@ export const useSocket = () => {
       const currentSessionId = sessionStorage.getItem('gameSessionId');
       if (currentSessionId && reason !== 'io client disconnect') {
         setIsReconnecting(true);
+        playDisconnect();
       }
     });
 
@@ -309,6 +313,8 @@ export const useSocket = () => {
       };
       setGameState(newGameState);
       
+      playNotification();
+      
       setIsTransitioning(true);
       setTimeout(() => {
         setGamePhase(GamePhase.SETUP);
@@ -345,6 +351,8 @@ export const useSocket = () => {
         sessionStorage.setItem('gameState', JSON.stringify(newGameState));
         return newGameState;
       });
+      
+      playGameStart();
       
       setIsTransitioning(true);
       setTimeout(() => {
@@ -384,6 +392,18 @@ export const useSocket = () => {
           }))
         };
         sessionStorage.setItem('gameState', JSON.stringify(newGameState));
+        
+        // Play appropriate end game sound
+        const me = newGameState.players.find(p => p.name === playerName);
+        const isWinner = data.winner === me?.name;
+        if (data.isDraw) {
+          playNotification();
+        } else if (isWinner) {
+          playGameWin();
+        } else {
+          playGameLose();
+        }
+        
         return newGameState;
       });
       
@@ -428,10 +448,12 @@ export const useSocket = () => {
 
     socketInstance.on('numberError', (message) => {
       setError(message);
+      playError();
     });
 
     socketInstance.on('guessError', (message) => {
       setError(message);
+      playError();
     });
 
     socketInstance.on('opponentDisconnected', (data) => {
@@ -473,6 +495,7 @@ export const useSocket = () => {
     socketInstance.on('nameError', (message) => {
       setError(message);
       setGamePhase(GamePhase.LOBBY);
+      playError();
     });
   };
 

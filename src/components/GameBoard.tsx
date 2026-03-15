@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Send, History, Trophy, Target, CheckCircle, AlertCircle, XCircle, Star } from 'lucide-react';
 import { Player, GuessData } from '../types/game';
 import { VersionDisplay } from './VersionDisplay';
+import { useSound } from '../hooks/useSound';
 
 interface GameBoardProps {
   players: Player[];
@@ -29,6 +30,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const [guess, setGuess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedInput, setFocusedInput] = useState(false);
+  const { playButtonClick, playKeypress, playCorrectPosition, playCorrectDigit, playNoMatch } = useSound();
   
   const me = players.find(p => p.id === myId);
   const opponent = players.find(p => p.id !== myId);
@@ -48,6 +50,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     e.preventDefault();
     if (validateGuess(guess) && isMyTurn && !isSubmitting) {
       setIsSubmitting(true);
+      playButtonClick();
       setTimeout(() => {
         onMakeGuess(guess);
         setGuess('');
@@ -162,7 +165,13 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       pattern="[0-9]*"
                       id="guess"
                       value={guess}
-                      onChange={(e) => setGuess(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                      onChange={(e) => {
+                        const newValue = e.target.value.replace(/\D/g, '').slice(0, 5);
+                        if (newValue.length > guess.length) {
+                          playKeypress();
+                        }
+                        setGuess(newValue);
+                      }}
                       onFocus={() => setFocusedInput(true)}
                       onBlur={() => setFocusedInput(false)}
                       aria-label="Enter your guess for the opponent's number"

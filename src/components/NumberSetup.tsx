@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Shuffle, Check, Users, AlertCircle, CheckCircle, XCircle, Zap } from 'lucide-react';
 import { Player } from '../types/game';
 import { VersionDisplay } from './VersionDisplay';
+import { useSound } from '../hooks/useSound';
 
 interface NumberSetupProps {
   players: Player[];
@@ -25,6 +26,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
   const [inputNumber, setInputNumber] = useState(myNumber);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedInput, setFocusedInput] = useState(false);
+  const { playButtonClick, playKeypress, playSuccess, playNotification } = useSound();
   const me = players.find(p => p.id === myId);
   const opponent = players.find(p => p.id !== myId);
 
@@ -51,14 +53,18 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
     e.preventDefault();
     if (validateNumber(inputNumber) && !isSubmitting) {
       setIsSubmitting(true);
+      playButtonClick();
       setTimeout(() => {
         onSetNumber(inputNumber);
+        playSuccess();
       }, 200);
     }
   };
 
   const handleGenerate = () => {
+    playButtonClick();
     onGenerateRandom();
+    setTimeout(() => playNotification(), 100);
   };
 
   React.useEffect(() => {
@@ -136,7 +142,13 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
                 pattern="[0-9]*"
                 id="secretNumber"
                 value={inputNumber}
-                onChange={(e) => setInputNumber(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                onChange={(e) => {
+                  const newValue = e.target.value.replace(/\D/g, '').slice(0, 5);
+                  if (newValue.length > inputNumber.length) {
+                    playKeypress();
+                  }
+                  setInputNumber(newValue);
+                }}
                 onFocus={() => setFocusedInput(true)}
                 onBlur={() => setFocusedInput(false)}
                 aria-label="Enter your secret 5-digit number"

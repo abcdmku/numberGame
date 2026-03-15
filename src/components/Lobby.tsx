@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Gamepad2, Sparkles } from 'lucide-react';
 import { VersionDisplay } from './VersionDisplay';
+import { useSound } from '../hooks/useSound';
 
 interface LobbyProps {
   onJoin: (name: string) => void;
@@ -10,14 +11,17 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [focusedInput, setFocusedInput] = useState(false);
+  const { playButtonClick, playKeypress, playSuccess } = useSound();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && !isSubmitting) {
       setIsSubmitting(true);
+      playButtonClick();
       // Add a small delay for visual feedback
       setTimeout(() => {
         onJoin(name.trim());
+        playSuccess();
       }, 300);
     }
   };
@@ -46,7 +50,12 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
               type="text"
               id="playerName"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                if (e.target.value.length > name.length) {
+                  playKeypress();
+                }
+              }}
               onFocus={() => setFocusedInput(true)}
               onBlur={() => setFocusedInput(false)}
               aria-label="Enter your player name"
