@@ -60,6 +60,11 @@ export const useSocket = () => {
   });
   const [opponentStatus, setOpponentStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected');
 
+  const shouldPlayTurnNotification = (players: Player[], nextTurn: string | null, previousTurn: string | null) => {
+    const myId = players.find(player => player.name === playerName)?.id;
+    return Boolean(myId && nextTurn === myId && nextTurn !== previousTurn);
+  };
+
   useEffect(() => {
     // Check for existing session in sessionStorage (per tab)
     const savedSessionId = sessionStorage.getItem('gameSessionId');
@@ -363,20 +368,32 @@ export const useSocket = () => {
     });
 
     socketInstance.on('guessMade', (data) => {
-      setGameState(prev => ({
-        ...prev,
-        currentTurn: data.currentTurn,
-        allGuesses: data.allGuesses
-      }));
+      setGameState(prev => {
+        if (shouldPlayTurnNotification(prev.players, data.currentTurn, prev.currentTurn)) {
+          playNotification();
+        }
+
+        return {
+          ...prev,
+          currentTurn: data.currentTurn,
+          allGuesses: data.allGuesses
+        };
+      });
     });
 
     socketInstance.on('playerWonButGameContinues', (data) => {
-      setGameState(prev => ({
-        ...prev,
-        currentTurn: data.currentTurn,
-        allGuesses: data.allGuesses,
-        potentialWinner: data.winnerName
-      }));
+      setGameState(prev => {
+        if (shouldPlayTurnNotification(prev.players, data.currentTurn, prev.currentTurn)) {
+          playNotification();
+        }
+
+        return {
+          ...prev,
+          currentTurn: data.currentTurn,
+          allGuesses: data.allGuesses,
+          potentialWinner: data.winnerName
+        };
+      });
     });
 
     socketInstance.on('gameEnded', (data) => {
@@ -415,6 +432,8 @@ export const useSocket = () => {
     });
 
     socketInstance.on('newGameStarted', (data) => {
+      playSuccess();
+
       setGameState(prev => ({
         ...prev,
         currentTurn: data.currentTurn,
@@ -485,6 +504,7 @@ export const useSocket = () => {
     });
 
     socketInstance.on('rematchRequested', () => {
+      playNotification();
       setRematchState(prev => ({ ...prev, opponentRequested: true }));
     });
 
@@ -569,6 +589,7 @@ export const useSocket = () => {
       if (socketRef.current && gameState.gameId) {
         socketRef.current.emit('requestRematch', { gameId: gameState.gameId });
         setRematchState(prev => ({ ...prev, requested: true }));
+        playNotification();
       }
     },
     acceptRematch: () => {

@@ -29,12 +29,11 @@ export const useSound = () => {
     localStorage.setItem('soundVolume', volume.toString());
   }, [volume]);
 
-  // Sound effect functions with null checks
+  // Let the sound manager enforce current enable/disable state so
+  // long-lived socket listeners do not capture a stale soundEnabled value.
   const playSound = useCallback((soundFn: () => Promise<void>) => {
-    if (soundEnabled) {
-      soundFn().catch(console.warn);
-    }
-  }, [soundEnabled]);
+    soundFn().catch(console.warn);
+  }, []);
 
   return {
     soundEnabled,
