@@ -7,7 +7,7 @@ import { NumberSetup } from './components/NumberSetup';
 import { GameBoard } from './components/GameBoard';
 import { GameResults } from './components/GameResults';
 import { ErrorDisplay } from './components/ErrorDisplay';
-import { SocketDebugger } from './components/SocketDebugger';
+import { SoundToggle } from './components/SoundToggle';
 import { GamePhase } from './types/game';
 
 function App() {
@@ -59,84 +59,49 @@ function App() {
   // Show reconnecting screen
   if (isReconnecting) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 max-w-md shadow-2xl border border-white/20 text-center animate-in fade-in duration-700">
-          <div className="relative flex items-center justify-center w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mb-6 mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full opacity-50 animate-ping"></div>
-            <div className="relative w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-          </div>
-          <h2 className="text-2xl font-bold text-white mb-4">Reconnecting...</h2>
-          <p className="text-blue-100 mb-6">Restoring your game session</p>
-          
-          {/* Enhanced progress indicators */}
-          <div className="space-y-4">
-            <div className="flex justify-center space-x-2">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-              <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-            </div>
-            
-            <div className="w-full bg-white/10 rounded-full h-1">
-              <div className="h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse" style={{ width: '60%' }}></div>
-            </div>
-            
-            <p className="text-xs text-blue-200">This usually takes a few seconds</p>
-          </div>
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin mx-auto mb-6"></div>
+          <h2 className="text-xl font-semibold text-zinc-100 mb-2">Reconnecting...</h2>
+          <p className="text-zinc-500 text-sm">Restoring your game session</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen overflow-hidden select-none">
-      {/* Screen reader only styles */}
-      <style jsx global>{`
-        .sr-only {
-          position: absolute;
-          width: 1px;
-          height: 1px;
-          padding: 0;
-          margin: -1px;
-          overflow: hidden;
-          clip: rect(0, 0, 0, 0);
-          white-space: nowrap;
-          border: 0;
-        }
-      `}</style>
-      
+    <div className="min-h-screen bg-zinc-950 overflow-x-hidden select-none">
       <ErrorDisplay error={error} onClose={() => setError('')} />
-      <SocketDebugger socket={socketRef.current} />
-      
+      <SoundToggle />
+
       {/* Transition overlay */}
       {isTransitioning && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 flex items-center justify-center">
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-xl border border-white/20">
-            <div className="flex items-center gap-3">
-              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span className="text-white font-medium">Transitioning...</span>
-            </div>
+        <div className="fixed inset-0 bg-black/50 z-40 flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin" />
+            <span className="text-zinc-300 text-sm">Transitioning...</span>
           </div>
         </div>
       )}
-      
+
       {/* Return to Lobby Confirmation Dialog */}
       {showReturnConfirm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 w-full max-w-md shadow-2xl border border-white/20">
-            <h3 className="text-xl font-bold text-white mb-4">Leave Game?</h3>
-            <p className="text-blue-100 mb-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-zinc-100 mb-3">Leave Game?</h3>
+            <p className="text-zinc-400 text-sm mb-6">
               Are you sure you want to return to the lobby? This will end your current game and disconnect you from your opponent.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={confirmReturnToLobby}
-                className="w-full sm:flex-1 bg-red-500/80 backdrop-blur-sm text-white py-3 px-6 rounded-none md:rounded-xl font-semibold hover:bg-red-600/80 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200"
+                className="w-full sm:flex-1 bg-red-500/10 border border-red-500/20 text-red-400 py-2.5 px-4 rounded-lg font-medium hover:bg-red-500/20 focus:outline-none focus:ring-1 focus:ring-red-500/50 transition-colors duration-200"
               >
                 Yes, Leave Game
               </button>
               <button
                 onClick={cancelReturn}
-                className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-3 px-6 rounded-none md:rounded-xl font-semibold hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200"
+                className="w-full sm:flex-1 bg-zinc-800 text-zinc-300 py-2.5 px-4 rounded-lg font-medium hover:bg-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors duration-200"
               >
                 Cancel
               </button>
@@ -149,84 +114,77 @@ function App() {
       {(gamePhase === GamePhase.SETUP || gamePhase === GamePhase.PLAYING) && (
         <button
           onClick={handleReturnToLobby}
-          className="fixed top-4 left-4 z-40 bg-white/10 backdrop-blur-md text-white p-3 rounded-xl hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center gap-2"
+          className="fixed top-4 left-4 z-40 bg-zinc-800 text-zinc-300 p-2.5 rounded-lg hover:bg-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors duration-200 flex items-center gap-2"
         >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="hidden sm:inline">Return to Lobby</span>
+          <ArrowLeft className="w-4 h-4" />
+          <span className="hidden sm:inline text-sm">Return to Lobby</span>
         </button>
       )}
 
-      <div className={`transition-all duration-300 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
+      <div className={`transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
         {gamePhase === GamePhase.LOBBY && (
-          <div className="animate-in fade-in duration-500">
-            <Lobby onJoin={joinLobby} />
-          </div>
+          <Lobby onJoin={joinLobby} />
         )}
-        
+
         {gamePhase === GamePhase.WAITING && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <>
             <button
               onClick={handleReturnToLobby}
-              className="fixed top-4 left-4 z-40 bg-white/10 backdrop-blur-md text-white p-3 rounded-xl hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center gap-2"
+              className="fixed top-4 left-4 z-40 bg-zinc-800 text-zinc-300 p-2.5 rounded-lg hover:bg-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors duration-200 flex items-center gap-2"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="hidden sm:inline">Return to Lobby</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline text-sm">Return to Lobby</span>
             </button>
-            <WaitingRoom 
-              playerName={playerName} 
+            <WaitingRoom
+              playerName={playerName}
               opponentStatus={opponentStatus}
               onWaitForOpponent={waitForOpponent}
             />
-          </div>
+          </>
         )}
-        
+
         {gamePhase === GamePhase.SETUP && (
-          <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-            <NumberSetup
-              players={gameState.players}
-              myId={myId}
-              onSetNumber={setNumber}
-              onGenerateRandom={generateRandomNumber}
-              myNumber={myNumber}
-              gameNumber={gameState.gameNumber}
-             opponentStatus={opponentStatus}
-            />
-          </div>
+          <NumberSetup
+            players={gameState.players}
+            myId={myId}
+            onSetNumber={setNumber}
+            onGenerateRandom={generateRandomNumber}
+            myNumber={myNumber}
+            gameNumber={gameState.gameNumber}
+            opponentStatus={opponentStatus}
+          />
         )}
-        
+
         {gamePhase === GamePhase.PLAYING && (
-          <div className="animate-in fade-in slide-in-from-left-4 duration-700">
-            <GameBoard
-              players={gameState.players}
-              myId={myId}
-              currentTurn={gameState.currentTurn || ''}
-              allGuesses={gameState.allGuesses}
-              onMakeGuess={makeGuess}
-              gameNumber={gameState.gameNumber}
-              gameState={gameState}
-              opponentStatus={opponentStatus}
-              playerName={playerName}
-            />
-          </div>
+          <GameBoard
+            players={gameState.players}
+            myId={myId}
+            currentTurn={gameState.currentTurn || ''}
+            allGuesses={gameState.allGuesses}
+            onMakeGuess={makeGuess}
+            gameNumber={gameState.gameNumber}
+            gameState={gameState}
+            opponentStatus={opponentStatus}
+            playerName={playerName}
+            socket={socketRef.current}
+          />
         )}
-        
+
         {gamePhase === GamePhase.ENDED && (
-          <div className="animate-in fade-in zoom-in-95 duration-700">
-            <GameResults
-              winner={gameState.winner || ''}
-              players={gameState.players}
-              myId={myId}
-              onPlayAgain={playAgain}
-              onReturnToLobby={handleReturnToLobby}
-              gameNumber={gameState.gameNumber}
-              rematchState={rematchState}
-              onRequestRematch={requestRematch}
-              onAcceptRematch={acceptRematch}
-              onJoinLobby={joinLobby}
-              playerName={playerName}
-              gameState={gameState}
-            />
-          </div>
+          <GameResults
+            winner={gameState.winner || ''}
+            players={gameState.players}
+            myId={myId}
+            onPlayAgain={playAgain}
+            onReturnToLobby={handleReturnToLobby}
+            gameNumber={gameState.gameNumber}
+            rematchState={rematchState}
+            onRequestRematch={requestRematch}
+            onAcceptRematch={acceptRematch}
+            onJoinLobby={joinLobby}
+            playerName={playerName}
+            gameState={gameState}
+          />
         )}
       </div>
     </div>

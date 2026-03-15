@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Home, Crown, Users, Clock, Check, X, History, Star } from 'lucide-react';
+import { Home, Users, Check, X } from 'lucide-react';
 import { Player } from '../types/game';
 import { VersionDisplay } from './VersionDisplay';
 
@@ -40,362 +40,170 @@ export const GameResults: React.FC<GameResultsProps> = ({
   const me = players.find(p => p.id === myId);
   const opponent = players.find(p => p.id !== myId);
   const isWinner = winner === me?.name;
+  const meIsWinner = winner === me?.name;
+  const opponentIsWinner = winner === opponent?.name;
 
-  const renderFeedbackBadges = (feedback: { correctPosition: number; correctDigitWrongPosition: number }) => {
-    const badges = [];
-    
-    // Position badges (correct position)
-    if (feedback.correctPosition > 0) {
-      badges.push(
-        <div key="position" className="flex items-center gap-1 bg-green-500/20 text-green-300 px-2 py-1 rounded-full text-xs font-medium border border-green-500/30">
-          <CheckCircle className="w-3 h-3" />
-          <span>Position: {feedback.correctPosition}</span>
-        </div>
-      );
-    }
-    
-    // Close badges (correct digit, wrong position)
-    if (feedback.correctDigitWrongPosition > 0) {
-      badges.push(
-        <div key="close" className="flex items-center gap-1 bg-orange-500/20 text-orange-300 px-2 py-1 rounded-full text-xs font-medium border border-orange-500/30">
-          <AlertCircle className="w-3 h-3" />
-          <span>Close: {feedback.correctDigitWrongPosition}</span>
-        </div>
-      );
-    }
-    
-    // Show "None" only if no matches at all
-    if (feedback.correctPosition === 0 && feedback.correctDigitWrongPosition === 0) {
-      badges.push(
-        <div key="none" className="flex items-center gap-1 bg-red-500/20 text-red-300 px-2 py-1 rounded-full text-xs font-medium border border-red-500/30">
-          <XCircle className="w-3 h-3" />
-          <span>None</span>
-        </div>
-      );
-    }
-    
-    return badges;
-  };
+  const renderGuessTable = (guesses: any[], label: string) => (
+    <div>
+      <h4 className="text-sm font-medium text-zinc-300 mb-3">{label}</h4>
+      <div className="max-h-60 overflow-y-auto">
+        {!guesses || guesses.length === 0 ? (
+          <p className="text-zinc-600 text-sm py-4 text-center">No guesses made</p>
+        ) : (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
+            <div className="grid grid-cols-4 gap-px text-xs font-medium text-zinc-500 uppercase tracking-wider p-2 border-b border-zinc-800">
+              <div className="text-center">#</div>
+              <div className="text-center">Guess</div>
+              <div className="text-center">Pos</div>
+              <div className="text-center">Close</div>
+            </div>
+            {guesses.map((guessData: any, index: number) => {
+              const isWin = guessData.feedback.correctPosition === 5;
+              return (
+                <div key={index} className={`grid grid-cols-4 gap-px p-2 border-t border-zinc-800/50 ${
+                  isWin ? 'bg-emerald-500/5' : ''
+                }`}>
+                  <div className="text-center text-zinc-500 text-sm">
+                    {guessData.turn}
+                  </div>
+                  <div className={`text-center font-mono text-base tracking-wider ${
+                    isWin ? 'text-emerald-400 font-semibold' : 'text-zinc-100'
+                  }`}>
+                    {guessData.guess}
+                  </div>
+                  <div className="text-center">
+                    <span className={`text-sm font-mono font-semibold ${
+                      guessData.feedback.correctPosition > 0 ? 'text-emerald-400' : 'text-zinc-600'
+                    }`}>
+                      {guessData.feedback.correctPosition}
+                    </span>
+                  </div>
+                  <div className="text-center">
+                    <span className={`text-sm font-mono font-semibold ${
+                      guessData.feedback.correctDigitWrongPosition > 0 ? 'text-amber-400' : 'text-zinc-600'
+                    }`}>
+                      {guessData.feedback.correctDigitWrongPosition}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 md:flex md:items-center md:justify-center p-4">
-      <div className="bg-transparent md:bg-white/10 md:backdrop-blur-md rounded-none md:rounded-3xl p-6 md:p-8 w-full md:max-w-2xl md:shadow-2xl border-0 md:border md:border-white/20 text-center min-h-screen md:min-h-0 flex flex-col justify-center">
-        <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${
-          isWinner 
-            ? 'bg-gradient-to-r from-yellow-400 to-orange-500' 
-            : 'bg-gradient-to-r from-blue-500 to-purple-600'
-        }`}>
-          {isWinner ? (
-            <Crown className="w-10 h-10 text-white" />
-          ) : (
-            <Trophy className="w-10 h-10 text-white" />
-          )}
-        </div>
-
-        <div className="text-center mb-10">
-          <h2 className="text-4xl font-bold text-white mb-4 tracking-tight">
-            <span className="bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
-              Game {gameNumber}
-            </span>
-            <span className="block text-2xl font-semibold text-blue-200 mt-2 tracking-wide">Results</span>
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+      <div className="w-full max-w-2xl">
+        <div className="text-center mb-8">
+          <div className="text-zinc-500 text-sm mb-1">Game {gameNumber}</div>
+          <h2 className={`text-2xl font-semibold ${
+            gameState.isDraw ? 'text-zinc-300' : isWinner ? 'text-amber-400' : 'text-red-400'
+          }`}>
+            {gameState.isDraw ? "It's a Draw" : isWinner ? 'You Won!' : `${winner} Won`}
           </h2>
-
-          <div className={`text-5xl font-bold mb-6 tracking-tight ${
-            gameState.isDraw ? 'text-purple-300' : isWinner ? 'text-yellow-300' : 'text-blue-300'
-          }`}>
-            <span className={`bg-gradient-to-r bg-clip-text text-transparent ${
-              gameState.isDraw 
-                ? 'from-purple-300 via-purple-100 to-purple-300' 
-                : isWinner 
-                  ? 'from-yellow-300 via-yellow-100 to-yellow-300'
-                  : 'from-blue-300 via-blue-100 to-blue-300'
-            }`}>
-              {gameState.isDraw ? '🤝 It\'s a Draw!' : isWinner ? '🎉 You Won!' : `${winner} Wins!`}
-            </span>
-          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 md:gap-4 mb-8">
-          <div className={`bg-white/5 rounded-xl p-4 border transition-all duration-300 ${
-            isWinner ? 'border-green-500/50 bg-green-500/10' : 'border-white/10'
+        <div className="grid md:grid-cols-2 gap-3 mb-6">
+          <div className={`border rounded-lg p-4 ${
+            meIsWinner ? 'bg-amber-500/10 border-amber-500/40' : 'bg-zinc-900 border-zinc-800'
           }`}>
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <div className={`w-4 h-4 rounded-full ${
-                isWinner ? 'bg-green-400 shadow-lg shadow-green-400/30' : 'bg-green-400'
-              }`}></div>
-              <span className="text-white font-medium">{me?.name} (You)</span>
-              {isWinner && <Crown className="w-4 h-4 text-yellow-400" />}
+            <div className="flex items-center gap-2 mb-3">
+              <div className={`w-2 h-2 rounded-full ${meIsWinner ? 'bg-amber-400' : 'bg-zinc-600'}`}></div>
+              <span className={`text-sm font-medium ${meIsWinner ? 'text-amber-300' : 'text-zinc-100'}`}>{me?.name} (You)</span>
+              {meIsWinner && <span className="text-xs text-amber-400 font-medium">Winner</span>}
             </div>
             <div className="space-y-2">
-              <div className="bg-white/10 rounded-lg p-2">
-                <div className="text-xs text-blue-200 mb-1">Your Number</div>
-                <div className="text-lg font-mono text-white tracking-wider">{me?.number}</div>
+              <div className="bg-zinc-800/50 rounded-md p-2">
+                <div className="text-xs text-zinc-500 mb-0.5">Your Number</div>
+                <div className="text-lg font-mono text-zinc-100 tracking-wider">{me?.number}</div>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-blue-200">Guesses made:</span>
-                <span className="text-white font-semibold">{me?.guesses?.length || 0}</span>
+                <span className="text-zinc-500">Guesses</span>
+                <span className="text-zinc-100 font-mono">{me?.guesses?.length || 0}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-blue-200">Total wins:</span>
-                <span className="text-green-400 font-semibold">{me?.gamesWon || 0}</span>
+                <span className="text-zinc-500">Total wins</span>
+                <span className="text-amber-400 font-mono">{me?.gamesWon || 0}</span>
               </div>
-              {(me?.guesses?.length || 0) > 0 && (
-                <div className="mt-2">
-                  <div className="text-xs text-blue-200 mb-1">Efficiency</div>
-                  <div className="w-full bg-gray-600 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-500 ${
-                        isWinner ? 'bg-gradient-to-r from-green-500 to-yellow-400' : 'bg-gradient-to-r from-green-500 to-green-400'
-                      }`}
-                      style={{ width: `${Math.max(20, 100 - ((me?.guesses?.length || 0) * 10))}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
-          
-          <div className={`bg-white/5 rounded-xl p-4 border transition-all duration-300 ${
-            !isWinner && !gameState.isDraw ? 'border-purple-500/50 bg-purple-500/10' : 'border-white/10'
+
+          <div className={`border rounded-lg p-4 ${
+            opponentIsWinner ? 'bg-amber-500/10 border-amber-500/40' : 'bg-zinc-900 border-zinc-800'
           }`}>
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <div className={`w-4 h-4 rounded-full ${
-                !isWinner && !gameState.isDraw ? 'bg-purple-400 shadow-lg shadow-purple-400/30' : 'bg-purple-400'
-              }`}></div>
-              <span className="text-white font-medium">{opponent?.name}</span>
-              {!isWinner && !gameState.isDraw && <Crown className="w-4 h-4 text-yellow-400" />}
+            <div className="flex items-center gap-2 mb-3">
+              <div className={`w-2 h-2 rounded-full ${opponentIsWinner ? 'bg-amber-400' : 'bg-zinc-600'}`}></div>
+              <span className={`text-sm font-medium ${opponentIsWinner ? 'text-amber-300' : 'text-zinc-100'}`}>{opponent?.name}</span>
+              {opponentIsWinner && <span className="text-xs text-amber-400 font-medium">Winner</span>}
             </div>
             <div className="space-y-2">
-              <div className="bg-white/10 rounded-lg p-2">
-                <div className="text-xs text-blue-200 mb-1">Their Number</div>
-                <div className="text-lg font-mono text-white tracking-wider">{opponent?.number}</div>
+              <div className="bg-zinc-800/50 rounded-md p-2">
+                <div className="text-xs text-zinc-500 mb-0.5">Their Number</div>
+                <div className="text-lg font-mono text-zinc-100 tracking-wider">{opponent?.number}</div>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-blue-200">Guesses made:</span>
-                <span className="text-white font-semibold">{opponent?.guesses?.length || 0}</span>
+                <span className="text-zinc-500">Guesses</span>
+                <span className="text-zinc-100 font-mono">{opponent?.guesses?.length || 0}</span>
               </div>
               <div className="flex justify-between items-center text-sm">
-                <span className="text-blue-200">Total wins:</span>
-                <span className="text-purple-400 font-semibold">{opponent?.gamesWon || 0}</span>
+                <span className="text-zinc-500">Total wins</span>
+                <span className="text-zinc-300 font-mono">{opponent?.gamesWon || 0}</span>
               </div>
-              {(opponent?.guesses?.length || 0) > 0 && (
-                <div className="mt-2">
-                  <div className="text-xs text-blue-200 mb-1">Efficiency</div>
-                  <div className="w-full bg-gray-600 rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full transition-all duration-500 ${
-                        !isWinner && !gameState.isDraw ? 'bg-gradient-to-r from-purple-500 to-yellow-400' : 'bg-gradient-to-r from-purple-500 to-purple-400'
-                      }`}
-                      style={{ width: `${Math.max(20, 100 - ((opponent?.guesses?.length || 0) * 10))}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
 
         {/* Complete Game History */}
-        <div className="mb-8">
-          <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-2xl p-4 md:p-6 shadow-xl border-0 md:border border-white/20">
-            <div className="flex items-center gap-2 mb-6">
-              <History className="w-5 h-5 text-blue-300" />
-              <h3 className="text-xl font-semibold text-white">Complete Game History</h3>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6 md:gap-4">
-              {/* My Guesses */}
-              <div>
-                <h4 className="text-lg font-medium text-green-300 mb-4">{me?.name} (You)</h4>
-                <div className="max-h-60 overflow-y-auto">
-                  {!me?.guesses || me.guesses.length === 0 ? (
-                    <p className="text-blue-200 text-sm italic p-4 text-center">No guesses made</p>
-                  ) : (
-                    <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-                      <div className="grid grid-cols-4 gap-px bg-white/10 text-xs font-medium text-blue-200 p-2">
-                        <div className="text-center">#</div>
-                        <div className="text-center">Guess</div>
-                        <div className="text-center">Pos</div>
-                        <div className="text-center">Close</div>
-                      </div>
-                      {me.guesses.map((guessData, index) => {
-                        const isWin = guessData.feedback.correctPosition === 5;
-                        return (
-                          <div key={index} className={`grid grid-cols-4 gap-px p-2 border-t border-white/5 hover:bg-white/5 transition-colors ${
-                            isWin ? 'bg-gradient-to-r from-yellow-400/10 to-orange-400/10' : ''
-                          }`}>
-                            <div className="text-center text-blue-300 text-sm font-medium">
-                              {guessData.turn}
-                            </div>
-                            <div className={`text-center font-mono text-lg tracking-wider ${
-                              isWin ? 'text-green-400 font-bold' : 'text-white'
-                            }`}>
-                              {guessData.guess}
-                            </div>
-                            <div className="text-center">
-                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                isWin 
-                                  ? 'bg-yellow-400 text-yellow-900 shadow-lg relative'
-                                  : guessData.feedback.correctPosition > 0
-                                  ? 'bg-emerald-600 text-white'
-                                  : 'bg-slate-600 text-slate-300'
-                              }`}>
-                                {isWin ? (
-                                  <>
-                                    <Star className="w-6 h-6 absolute inset-0 text-yellow-600 fill-current" />
-                                    <span className="relative z-10 text-xs font-bold">5</span>
-                                  </>
-                                ) : (
-                                  guessData.feedback.correctPosition
-                                )}
-                              </span>
-                            </div>
-                            <div className="text-center">
-                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                guessData.feedback.correctDigitWrongPosition > 0
-                                  ? 'bg-amber-600 text-white'
-                                  : 'bg-amber-600/30 text-amber-400'
-                              }`}>
-                                {guessData.feedback.correctDigitWrongPosition}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Opponent Guesses */}
-              <div>
-                <h4 className="text-lg font-medium text-purple-300 mb-4">{opponent?.name}</h4>
-                <div className="max-h-60 overflow-y-auto">
-                  {!opponent?.guesses || opponent.guesses.length === 0 ? (
-                    <p className="text-blue-200 text-sm italic p-4 text-center">No guesses made</p>
-                  ) : (
-                    <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-                      <div className="grid grid-cols-4 gap-px bg-white/10 text-xs font-medium text-blue-200 p-2">
-                        <div className="text-center">#</div>
-                        <div className="text-center">Guess</div>
-                        <div className="text-center">Pos</div>
-                        <div className="text-center">Close</div>
-                      </div>
-                      {opponent.guesses.map((guessData, index) => {
-                        const isWin = guessData.feedback.correctPosition === 5;
-                        return (
-                          <div key={index} className={`grid grid-cols-4 gap-px p-2 border-t border-white/5 hover:bg-white/5 transition-colors ${
-                            isWin ? 'bg-gradient-to-r from-yellow-400/10 to-orange-400/10' : ''
-                          }`}>
-                            <div className="text-center text-blue-300 text-sm font-medium">
-                              {guessData.turn}
-                            </div>
-                            <div className={`text-center font-mono text-lg tracking-wider ${
-                              isWin ? 'text-green-400 font-bold' : 'text-white'
-                            }`}>
-                              {guessData.guess}
-                            </div>
-                            <div className="text-center">
-                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                isWin 
-                                  ? 'bg-yellow-400 text-yellow-900 shadow-lg relative'
-                                  : guessData.feedback.correctPosition > 0
-                                  ? 'bg-emerald-600 text-white'
-                                  : 'bg-slate-600 text-slate-300'
-                              }`}>
-                                {isWin ? (
-                                  <>
-                                    <Star className="w-6 h-6 absolute inset-0 text-yellow-600 fill-current" />
-                                    <span className="relative z-10 text-xs font-bold">5</span>
-                                  </>
-                                ) : (
-                                  guessData.feedback.correctPosition
-                                )}
-                              </span>
-                            </div>
-                            <div className="text-center">
-                              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                guessData.feedback.correctDigitWrongPosition > 0
-                                  ? 'bg-amber-600 text-white'
-                                  : 'bg-amber-600/30 text-amber-400'
-                              }`}>
-                                {guessData.feedback.correctDigitWrongPosition}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+        <div className="mb-6 bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-zinc-100 mb-4">Game History</h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            {renderGuessTable(me?.guesses || [], `${me?.name} (You)`)}
+            {renderGuessTable(opponent?.guesses || [], opponent?.name || 'Opponent')}
           </div>
         </div>
 
-        {/* Show rematch request from opponent */}
+        {/* Rematch request from opponent */}
         {rematchState.opponentRequested && !rematchState.requested && (
-          <div className="space-y-4">
-            <div className="bg-blue-500/20 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30">
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <Users className="w-5 h-5 text-blue-300" />
-                <span className="text-blue-100 font-medium">Rematch Request</span>
-              </div>
-              <p className="text-sm text-blue-200 text-center mb-4">
-                {opponent?.name} wants to play another game. Accept?
+          <div className="space-y-3">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+              <p className="text-zinc-300 text-sm text-center mb-4">
+                {opponent?.name} wants to play again
               </p>
-              <div className="flex flex-col gap-4 sm:gap-3 sm:flex-row">
+              <div className="flex gap-3">
                 <button
                   onClick={onAcceptRematch}
-                  className="w-full sm:flex-1 bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2 touch-manipulation active:scale-95 md:active:scale-95 active:scale-[0.97]"
+                  className="flex-1 bg-emerald-600 text-white py-2.5 px-4 rounded-lg font-medium hover:bg-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-colors duration-200 flex items-center justify-center gap-2"
                 >
-                  <Check className="w-5 h-5" />
-                  Accept Rematch
+                  <Check className="w-4 h-4" />
+                  Accept
                 </button>
                 <button
                   onClick={onReturnToLobby}
-                  className="w-full sm:flex-1 bg-white/20 backdrop-blur-sm text-white py-4 md:py-3 px-6 rounded-xl font-semibold hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2 touch-manipulation active:scale-95 md:active:scale-95 active:scale-[0.97]"
+                  className="flex-1 bg-zinc-800 text-zinc-300 py-2.5 px-4 rounded-lg font-medium hover:bg-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors duration-200 flex items-center justify-center gap-2"
                 >
-                  <X className="w-5 h-5" />
-                  Decline & Leave
+                  <X className="w-4 h-4" />
+                  Decline
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Show waiting for opponent response */}
+        {/* Waiting for opponent response */}
         {rematchState.requested && !rematchState.opponentRequested && (
-          <div className="space-y-4">
-            <div className="bg-blue-500/20 backdrop-blur-sm rounded-xl p-4 border border-blue-500/30">
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <Clock className="w-5 h-5 text-blue-300 animate-pulse" />
-                <span className="text-blue-100 font-medium">Rematch Request Sent</span>
-              </div>
-              <p className="text-sm text-blue-200 text-center">
-                Waiting for {opponent?.name} to accept...
-              </p>
-              <div className="mt-4 space-y-3">
-                <div className="flex justify-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce shadow-lg shadow-blue-400/50" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce shadow-lg shadow-blue-400/50" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce shadow-lg shadow-blue-400/50" style={{ animationDelay: '300ms' }}></div>
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce shadow-lg shadow-blue-400/50" style={{ animationDelay: '450ms' }}></div>
-                </div>
-                
-                <div className="w-40 mx-auto">
-                  <div className="w-full bg-blue-600/20 rounded-full h-1.5">
-                    <div className="h-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full animate-pulse" style={{ width: '65%' }}></div>
-                  </div>
-                </div>
-                
-                <p className="text-xs text-blue-300 text-center">Request sent successfully</p>
+          <div className="space-y-3">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="w-4 h-4 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin"></div>
+                <span className="text-zinc-300 text-sm">Waiting for {opponent?.name} to accept...</span>
               </div>
             </div>
-            
             <button
               onClick={onReturnToLobby}
-              className="w-full bg-white/10 backdrop-blur-sm text-white py-3 md:py-2 px-4 rounded-lg font-medium hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2 touch-manipulation active:scale-95"
+              className="w-full bg-zinc-800 text-zinc-400 py-2.5 px-4 rounded-lg font-medium hover:bg-zinc-700 hover:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors duration-200 flex items-center justify-center gap-2"
             >
               <Home className="w-4 h-4" />
               Cancel & Find New Opponent
@@ -403,36 +211,25 @@ export const GameResults: React.FC<GameResultsProps> = ({
           </div>
         )}
 
-        {/* Show initial options */}
+        {/* Initial options */}
         {!rematchState.requested && !rematchState.opponentRequested && (
-          <div className="flex flex-col gap-4 sm:flex-row sm:gap-4 justify-center">
+          <div className="flex gap-3">
             <button
               onClick={onRequestRematch}
-              className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2 touch-manipulation active:scale-95 md:active:scale-95 active:scale-[0.97]"
+              className="flex-1 bg-emerald-600 text-white py-2.5 px-4 rounded-lg font-medium hover:bg-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-colors duration-200 flex items-center justify-center gap-2"
             >
-              <Users className="w-5 h-5" />
+              <Users className="w-4 h-4" />
               Request Rematch
             </button>
-            
             <button
               onClick={() => onJoinLobby(playerName)}
-              className="w-full sm:w-auto bg-white/20 backdrop-blur-sm text-white py-4 md:py-3 px-6 rounded-xl font-semibold hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-200 flex items-center justify-center gap-2 touch-manipulation active:scale-95 md:active:scale-95 active:scale-[0.97]"
+              className="flex-1 bg-zinc-800 text-zinc-300 py-2.5 px-4 rounded-lg font-medium hover:bg-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors duration-200 flex items-center justify-center gap-2"
             >
-              <Home className="w-5 h-5" />
-              Find New Opponent
+              <Home className="w-4 h-4" />
+              New Opponent
             </button>
           </div>
         )}
-
-        <div className="mt-8 p-4 bg-white/5 rounded-xl border border-white/10">
-          <h4 className="text-sm font-medium text-white mb-2">What happens next?</h4>
-          <div className="text-xs text-blue-200 space-y-1">
-            <p>• <strong>Request Rematch:</strong> Ask {opponent?.name} to play another round</p>
-            <p>• <strong>Find New Opponent:</strong> Return to lobby and match with someone else</p>
-            <p>• Both players must accept to start a new game together</p>
-          </div>
-        </div>
-
       </div>
       <VersionDisplay />
     </div>

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Send, History, Trophy, Target, CheckCircle, AlertCircle, XCircle, Star } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { Player, GuessData } from '../types/game';
 import { VersionDisplay } from './VersionDisplay';
+import { SocketDebugger } from './SocketDebugger';
 import { useSound } from '../hooks/useSound';
 
 interface GameBoardProps {
@@ -14,6 +15,7 @@ interface GameBoardProps {
   gameState: any;
   opponentStatus: 'connected' | 'disconnected' | 'reconnecting';
   playerName: string;
+  socket?: any;
 }
 
 export const GameBoard: React.FC<GameBoardProps> = ({
@@ -25,17 +27,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   gameNumber,
   gameState,
   opponentStatus,
-  playerName
+  playerName,
+  socket
 }) => {
   const [guess, setGuess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [focusedInput, setFocusedInput] = useState(false);
-  const { playButtonClick, playKeypress, playCorrectPosition, playCorrectDigit, playNoMatch } = useSound();
-  
+  const { playButtonClick, playKeypress } = useSound();
+
   const me = players.find(p => p.id === myId);
   const opponent = players.find(p => p.id !== myId);
   const isMyTurn = currentTurn === myId;
-  
+
   const myGuesses = allGuesses.filter(g => g.playerId === myId);
   const opponentGuesses = allGuesses.filter(g => g.playerId !== myId);
 
@@ -60,7 +62,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   const isValid = validateGuess(guess);
-  
+
   const getValidationError = (num: string) => {
     if (num.length === 0) return '';
     if (num.length < 5) return `Need ${5 - num.length} more digit${5 - num.length > 1 ? 's' : ''}`;
@@ -75,51 +77,79 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   const validationError = getValidationError(guess);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-2 md:p-4">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4 tracking-tight">
-            <span className="bg-gradient-to-r from-white via-blue-100 to-white bg-clip-text text-transparent">
-              Game {gameNumber}
-            </span>
-            <span className="block text-2xl font-semibold text-blue-200 mt-1 tracking-wide">Number Master</span>
-          </h1>
-          <div className="flex items-center justify-center gap-8 text-blue-100 mb-6">
-            <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 backdrop-blur-sm">
-              <Trophy className="w-5 h-5 text-yellow-400" />
-              <span className="font-medium">{me?.name}: <span className="text-green-400 font-bold">{me?.gamesWon ?? 0}</span> wins</span>
-            </div>
-            <div className="w-px h-6 bg-gradient-to-b from-transparent via-blue-400 to-transparent"></div>
-            <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-full border border-white/10 backdrop-blur-sm">
-              <Trophy className="w-5 h-5 text-yellow-400" />
-              <span className="font-medium">{opponent?.name}: <span className="text-purple-400 font-bold">{opponent?.gamesWon ?? 0}</span> wins</span>
-            </div>
+  const renderGuessTable = (guesses: GuessData[], label: string, emptyText: string, isMe: boolean) => (
+    <div>
+      <div className={`text-xs font-medium mb-1.5 truncate ${isMe ? 'text-emerald-400' : 'text-zinc-400'}`}>{label}</div>
+      {guesses.length === 0 ? (
+        <p className="text-zinc-600 text-xs py-3 text-center">{emptyText}</p>
+      ) : (
+        <div className="bg-zinc-950/50 rounded overflow-hidden">
+          <div className="grid grid-cols-4 text-[10px] font-medium text-zinc-600 uppercase py-1 px-1 border-b border-zinc-800">
+            <div className="text-center">#</div>
+            <div className="text-center">G</div>
+            <div className="text-center">P</div>
+            <div className="text-center">C</div>
           </div>
-          
-          {/* Game Progress Overview */}
-          <div className="bg-gradient-to-br from-white/5 via-white/10 to-white/5 rounded-2xl p-6 border border-white/10 backdrop-blur-sm shadow-lg shadow-white/5">
-            <div className="text-sm text-blue-200/90 mb-4 font-semibold tracking-wide flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-              Game Progress
-            </div>
+          {guesses.map((guessData, index) => {
+            const isWin = guessData.feedback.correctPosition === 5;
+            return (
+              <div key={index} className={`grid grid-cols-4 py-1 px-1 border-t border-zinc-800/30 ${isWin ? 'bg-emerald-500/5' : ''}`}>
+                <div className="text-center text-zinc-600 text-[10px]">{guessData.turn}</div>
+                <div className={`text-center font-mono text-xs ${isWin ? 'text-emerald-400 font-semibold' : 'text-zinc-100'}`}>
+                  {guessData.guess}
+                </div>
+                <div className="text-center">
+                  <span className={`text-xs font-mono font-semibold ${
+                    isWin || guessData.feedback.correctPosition > 0 ? 'text-emerald-400' : 'text-zinc-600'
+                  }`}>
+                    {guessData.feedback.correctPosition}
+                  </span>
+                </div>
+                <div className="text-center">
+                  <span className={`text-xs font-mono font-semibold ${
+                    guessData.feedback.correctDigitWrongPosition > 0 ? 'text-amber-400' : 'text-zinc-600'
+                  }`}>
+                    {guessData.feedback.correctDigitWrongPosition}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="bg-zinc-950 p-2 md:p-4 pb-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="text-center mb-4">
+          <h1 className="text-lg font-semibold text-zinc-100 mb-3">Game {gameNumber}</h1>
+          <div className="flex items-center justify-center gap-6 text-sm text-zinc-400 mb-4">
+            <span>{me?.name}: <span className="text-emerald-400 font-medium">{me?.gamesWon ?? 0}</span></span>
+            <span className="text-zinc-700">|</span>
+            <span>{opponent?.name}: <span className="text-zinc-300 font-medium">{opponent?.gamesWon ?? 0}</span></span>
+          </div>
+
+          {/* Game Progress */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-300 tracking-tight">{myGuesses.length}</div>
-                <div className="text-xs text-blue-200/80 font-medium tracking-wide uppercase">Your Guesses</div>
-                <div className="w-full bg-gray-600 rounded-full h-1.5 mt-2">
-                  <div 
-                    className="h-1.5 bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
+                <div className="text-2xl font-semibold text-zinc-100 font-mono">{myGuesses.length}</div>
+                <div className="text-xs text-zinc-500 uppercase tracking-wider">Your Guesses</div>
+                <div className="w-full bg-zinc-800 rounded-full h-0.5 mt-2">
+                  <div
+                    className="h-0.5 bg-emerald-500 rounded-full transition-all duration-500"
                     style={{ width: `${Math.min((myGuesses.length / 10) * 100, 100)}%` }}
                   ></div>
                 </div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-purple-300 tracking-tight">{opponentGuesses.length}</div>
-                <div className="text-xs text-blue-200/80 font-medium tracking-wide uppercase">{opponent?.name}'s Guesses</div>
-                <div className="w-full bg-gray-600 rounded-full h-1.5 mt-2">
-                  <div 
-                    className="h-1.5 bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all duration-500"
+                <div className="text-2xl font-semibold text-zinc-100 font-mono">{opponentGuesses.length}</div>
+                <div className="text-xs text-zinc-500 uppercase tracking-wider">{opponent?.name}'s Guesses</div>
+                <div className="w-full bg-zinc-800 rounded-full h-0.5 mt-2">
+                  <div
+                    className="h-0.5 bg-zinc-500 rounded-full transition-all duration-500"
                     style={{ width: `${Math.min((opponentGuesses.length / 10) * 100, 100)}%` }}
                   ></div>
                 </div>
@@ -128,35 +158,32 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="grid lg:grid-cols-3 gap-4">
           {/* Game Input */}
           <div className="lg:col-span-1 order-2 lg:order-1">
-            <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-2xl p-4 md:p-6 shadow-xl border-0 md:border border-white/20">
-              <div className="mb-6">
-                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-                  isMyTurn 
-                    ? 'bg-green-500/20 text-green-300 border border-green-500/30' 
-                    : 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
+              <div className="mb-4">
+                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm ${
+                  isMyTurn
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'bg-zinc-800 text-zinc-400'
                 }`}>
-                  <Target className="w-4 h-4" />
                   {isMyTurn ? 'Your Turn' : `${opponent?.name}'s Turn`}
                 </div>
-                
-                {/* Warning message if opponent has won */}
+
                 {gameState.potentialWinner && gameState.potentialWinner !== playerName && isMyTurn && (
-                  <div className="mt-3 bg-red-500/20 backdrop-blur-sm rounded-xl p-3 border border-red-500/30">
-                    <div className="flex items-center gap-2 text-red-300 text-sm font-medium">
-                      <AlertCircle className="w-4 h-4" />
-                      <span>Warning: You must guess correctly or {gameState.potentialWinner} will win!</span>
-                    </div>
+                  <div className="mt-3 bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                    <p className="text-red-400 text-sm">
+                      You must guess correctly or {gameState.potentialWinner} wins!
+                    </p>
                   </div>
                 )}
               </div>
 
               {isMyTurn && (
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
                   <div>
-                    <label htmlFor="guess" className="block text-sm font-medium text-blue-100 mb-2">
+                    <label htmlFor="guess" className="block text-xs font-medium text-zinc-400 mb-2">
                       Enter your guess
                     </label>
                     <input
@@ -172,68 +199,52 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                         }
                         setGuess(newValue);
                       }}
-                      onFocus={() => setFocusedInput(true)}
-                      onBlur={() => setFocusedInput(false)}
                       aria-label="Enter your guess for the opponent's number"
                       aria-describedby="guess-validation-status guess-requirements"
                       aria-invalid={guess.length > 0 && !isValid}
                       autoComplete="off"
-                      className={`w-full px-4 py-4 md:py-3 bg-white/20 backdrop-blur-sm border rounded-xl text-white text-center text-3xl md:text-2xl font-mono tracking-widest placeholder-blue-200 focus:outline-none transition-all duration-300 transform touch-manipulation ${
-                        focusedInput
-                          ? 'border-blue-400 ring-2 ring-blue-400/30 scale-[1.02] bg-white/25 shadow-lg shadow-blue-500/20'
-                          : 'border-white/30 hover:border-white/50 hover:bg-white/25'
-                      }`}
+                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-2xl font-mono tracking-[0.3em] text-center placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-colors duration-200"
                       placeholder="12345"
                       maxLength={5}
                       required
                     />
-                    <div className="mt-2 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          {guess.length > 0 && (
-                            <>
-                              {isValid ? (
-                                <CheckCircle className="w-4 h-4 text-green-400" />
-                              ) : (
-                                <XCircle className="w-4 h-4 text-red-400" />
-                              )}
-                              <span id="guess-validation-status" className={`text-xs ${isValid ? 'text-green-400' : 'text-red-400'}`} role="status" aria-live="polite">
-                                {isValid ? 'Valid guess' : validationError}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                        <span className={`text-xs ${guess.length === 5 ? 'text-green-400' : 'text-blue-300'}`}>
-                          {guess.length}/5
-                        </span>
+                    <div className="mt-2 flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        {guess.length > 0 && (
+                          <span id="guess-validation-status" className={`text-xs ${isValid ? 'text-emerald-400' : 'text-red-400'}`} role="status" aria-live="polite">
+                            {isValid ? 'Valid' : validationError}
+                          </span>
+                        )}
                       </div>
-                      {guess.length === 0 && (
-                        <p id="guess-requirements" className="text-xs text-blue-200">
-                          Enter 5 unique digits
-                        </p>
-                      )}
+                      <span className={`text-xs ${guess.length === 5 ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                        {guess.length}/5
+                      </span>
                     </div>
+                    {guess.length === 0 && (
+                      <p id="guess-requirements" className="text-xs text-zinc-500 mt-1">
+                        Enter 5 unique digits
+                      </p>
+                    )}
                   </div>
 
                   <button
                     type="submit"
                     disabled={!isValid || isSubmitting}
                     aria-label={isSubmitting ? 'Submitting your guess, please wait' : 'Submit your guess'}
-                    aria-describedby={!isValid && guess.length > 0 ? 'guess-validation-status' : undefined}
-                    className={`w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-4 md:py-3 px-6 rounded-xl font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transform touch-manipulation ${
+                    className={`w-full bg-emerald-600 text-white py-2.5 px-4 rounded-lg font-medium focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-colors duration-200 flex items-center justify-center gap-2 ${
                       !isValid || isSubmitting
-                        ? 'opacity-50 scale-95'
-                        : 'hover:from-blue-600 hover:to-purple-700 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 active:scale-95 md:active:scale-95 active:scale-[0.97]'
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-emerald-500'
                     }`}
                   >
                     {isSubmitting ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         Sending...
                       </>
                     ) : (
                       <>
-                        <Send className="w-5 h-5" />
+                        <Send className="w-4 h-4" />
                         Make Guess
                       </>
                     )}
@@ -242,20 +253,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               )}
 
               {!isMyTurn && (
-                <div className="text-center p-6 md:p-8">
-                  <div className="w-16 h-16 bg-orange-500/20 rounded-full flex items-center justify-center mx-auto mb-4 pulse">
-                    <Target className="w-8 h-8 text-orange-300" />
-                  </div>
-                  <p className="text-blue-100 text-base md:text-sm">
-                    Waiting for {opponent?.name} to make their guess...
+                <div className="text-center py-6">
+                  <div className="w-5 h-5 border-2 border-zinc-700 border-t-zinc-400 rounded-full animate-spin mx-auto mb-3"></div>
+                  <p className="text-zinc-400 text-sm">
+                    Waiting for {opponent?.name}...
                   </p>
-                  <div className="mt-4 flex justify-center">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
@@ -263,182 +265,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
           {/* Game History */}
           <div className="lg:col-span-2 order-1 lg:order-2">
-            <div className="bg-white/10 backdrop-blur-md rounded-none md:rounded-2xl p-4 md:p-6 shadow-xl border-0 md:border border-white/20">
-              <div className="flex items-center gap-2 mb-6">
-                <History className="w-5 h-5 text-blue-300" />
-                <h3 className="text-xl font-semibold text-white">Game History</h3>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4 md:gap-6">
-                {/* My Guesses */}
-                <div>
-                  <h4 className="text-lg font-medium text-green-300 mb-4">Your Guesses</h4>
-                  <div className="overflow-y-auto max-h-64 md:max-h-96">
-                    {myGuesses.length === 0 ? (
-                      <div className="text-center p-6">
-                        <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
-                          <Target className="w-6 h-6 text-green-300" />
-                        </div>
-                        <p className="text-blue-200 text-sm italic">No guesses yet</p>
-                        <p className="text-xs text-blue-300 mt-1">Make your first guess!</p>
-                        
-                        {/* Skeleton loader for upcoming guesses */}
-                        <div className="mt-4 space-y-2 opacity-30">
-                          <div className="h-3 bg-white/10 rounded animate-pulse"></div>
-                          <div className="h-3 bg-white/5 rounded animate-pulse" style={{ animationDelay: '150ms' }}></div>
-                          <div className="h-3 bg-white/10 rounded animate-pulse" style={{ animationDelay: '300ms' }}></div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-                        <div className="grid grid-cols-4 gap-px bg-white/10 text-xs font-medium text-blue-200 p-2">
-                          <div className="text-center">#</div>
-                          <div className="text-center">Guess</div>
-                          <div className="text-center">Pos</div>
-                          <div className="text-center">Close</div>
-                        </div>
-                        {myGuesses.map((guessData, index) => {
-                          const isWin = guessData.feedback.correctPosition === 5;
-                          return (
-                            <div key={index} className={`grid grid-cols-4 gap-px p-2 border-t border-white/5 hover:bg-white/5 transition-colors ${
-                              isWin ? 'bg-gradient-to-r from-yellow-400/10 to-orange-400/10' : ''
-                            }`}>
-                              <div className="text-center text-blue-300 text-sm font-medium">
-                                {guessData.turn}
-                              </div>
-                              <div className={`text-center font-mono text-lg tracking-wider ${
-                                isWin ? 'text-green-400 font-bold' : 'text-white'
-                              }`}>
-                                {guessData.guess}
-                              </div>
-                              <div className="text-center">
-                                <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                  isWin 
-                                    ? 'relative'
-                                    : guessData.feedback.correctPosition > 0
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-gray-600 text-gray-300'
-                                }`}>
-                                  {isWin ? (
-                                    <>
-                                      <Star className="w-8 h-8 absolute inset-0 text-yellow-400 fill-current" />
-                                      <span className="relative z-10 text-xs font-bold">5</span>
-                                    </>
-                                  ) : (
-                                    guessData.feedback.correctPosition
-                                  )}
-                                </span>
-                              </div>
-                              <div className="text-center">
-                                <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                  guessData.feedback.correctDigitWrongPosition > 0
-                                    ? 'bg-orange-500 text-white'
-                                    : 'bg-gray-600 text-gray-300'
-                                }`}>
-                                  {guessData.feedback.correctDigitWrongPosition}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Opponent Guesses */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-medium text-purple-300">
-                      {opponent?.name}'s Guesses
-                    </h4>
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-purple-500/20 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-bold text-purple-300">{opponentGuesses.length}</span>
-                      </div>
-                      {opponentGuesses.some(g => g.feedback.correctPosition === 5) && (
-                        <div className="w-5 h-5 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                          <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="overflow-y-auto max-h-64 md:max-h-96">
-                    {opponentGuesses.length === 0 ? (
-                      <div className="text-center p-6">
-                        <div className="w-12 h-12 bg-purple-500/10 rounded-full flex items-center justify-center mx-auto mb-3 animate-pulse">
-                          <Target className="w-6 h-6 text-purple-300" />
-                        </div>
-                        <p className="text-blue-200 text-sm italic">No guesses yet</p>
-                        <p className="text-xs text-blue-300 mt-1">Waiting for {opponent?.name}...</p>
-                        
-                        {/* Animated waiting indicator */}
-                        <div className="mt-4 flex justify-center space-x-1">
-                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                          <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
-                        <div className="grid grid-cols-4 gap-px bg-white/10 text-xs font-medium text-blue-200 p-2">
-                          <div className="text-center">#</div>
-                          <div className="text-center">Guess</div>
-                          <div className="text-center">Pos</div>
-                          <div className="text-center">Close</div>
-                        </div>
-                        {opponentGuesses.map((guessData, index) => {
-                          const isWin = guessData.feedback.correctPosition === 5;
-                          return (
-                            <div key={index} className={`grid grid-cols-4 gap-px p-2 border-t border-white/5 hover:bg-white/5 transition-colors ${
-                              isWin ? 'bg-gradient-to-r from-yellow-400/10 to-orange-400/10' : ''
-                            }`}>
-                              <div className="text-center text-blue-300 text-sm font-medium">
-                                {guessData.turn}
-                              </div>
-                              <div className={`text-center font-mono text-lg tracking-wider ${
-                                isWin ? 'text-yellow-200 font-bold' : 'text-white'
-                              }`}>
-                                {guessData.guess}
-                              </div>
-                              <div className="text-center">
-                                <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                  isWin 
-                                    ? 'relative' 
-                                    : guessData.feedback.correctPosition > 0
-                                    ? 'bg-green-500 text-white'
-                                    : 'bg-gray-600 text-gray-300'
-                                }`}>
-                                  {isWin ? (
-                                    <>
-                                      <Star className="w-8 h-8 absolute inset-0 text-yellow-400 fill-current" />
-                                      <span className="relative z-10 text-xs font-bold">5</span>
-                                    </>
-                                  ) : (
-                                    guessData.feedback.correctPosition
-                                  )}
-                                </span>
-                              </div>
-                              <div className="text-center">
-                                <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
-                                  guessData.feedback.correctDigitWrongPosition > 0
-                                    ? 'bg-orange-500 text-white'
-                                    : 'bg-gray-600 text-gray-300'
-                                }`}>
-                                  {guessData.feedback.correctDigitWrongPosition}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+              <div className="grid grid-cols-2 gap-2">
+                {renderGuessTable(myGuesses, 'You', 'No guesses yet', true)}
+                {renderGuessTable(opponentGuesses, opponent?.name ?? 'Opponent', `Waiting...`, false)}
               </div>
             </div>
           </div>
         </div>
+
+        <SocketDebugger socket={socket} inline />
       </div>
       <VersionDisplay />
     </div>
