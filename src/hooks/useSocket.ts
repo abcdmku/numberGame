@@ -59,11 +59,44 @@ export const useSocket = () => {
     opponentRequested: false
   });
   const [opponentStatus, setOpponentStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected');
+  const playerNameRef = useRef(playerName);
+  const soundRef = useRef({
+    playConnect,
+    playDisconnect,
+    playSuccess,
+    playError,
+    playNotification,
+    playGameStart,
+    playGameWin,
+    playGameLose
+  });
 
-  const shouldPlayTurnNotification = (players: Player[], nextTurn: string | null, previousTurn: string | null) => {
-    const myId = players.find(player => player.name === playerName)?.id;
+  const shouldPlayTurnNotification = (
+    players: Player[],
+    currentPlayerName: string,
+    nextTurn: string | null,
+    previousTurn: string | null
+  ) => {
+    const myId = players.find(player => player.name === currentPlayerName)?.id;
     return Boolean(myId && nextTurn === myId && nextTurn !== previousTurn);
   };
+
+  useEffect(() => {
+    playerNameRef.current = playerName;
+  }, [playerName]);
+
+  useEffect(() => {
+    soundRef.current = {
+      playConnect,
+      playDisconnect,
+      playSuccess,
+      playError,
+      playNotification,
+      playGameStart,
+      playGameWin,
+      playGameLose
+    };
+  }, [playConnect, playDisconnect, playSuccess, playError, playNotification, playGameStart, playGameWin, playGameLose]);
 
   useEffect(() => {
     // Check for existing session in sessionStorage (per tab)
@@ -207,7 +240,7 @@ export const useSocket = () => {
     socketInstance.on('connect', () => {
       console.log('Socket connected');
       setIsReconnecting(false);
-      playConnect();
+      soundRef.current.playConnect();
     });
 
     socketInstance.on('disconnect', (reason) => {
@@ -216,7 +249,7 @@ export const useSocket = () => {
       const currentSessionId = sessionStorage.getItem('gameSessionId');
       if (currentSessionId && reason !== 'io client disconnect') {
         setIsReconnecting(true);
-        playDisconnect();
+        soundRef.current.playDisconnect();
       }
     });
 
@@ -318,7 +351,7 @@ export const useSocket = () => {
       };
       setGameState(newGameState);
       
-      playNotification();
+      soundRef.current.playNotification();
       
       setIsTransitioning(true);
       setTimeout(() => {
@@ -357,7 +390,7 @@ export const useSocket = () => {
         return newGameState;
       });
       
-      playGameStart();
+      soundRef.current.playGameStart();
       
       setIsTransitioning(true);
       setTimeout(() => {
@@ -369,8 +402,8 @@ export const useSocket = () => {
 
     socketInstance.on('guessMade', (data) => {
       setGameState(prev => {
-        if (shouldPlayTurnNotification(prev.players, data.currentTurn, prev.currentTurn)) {
-          playNotification();
+        if (shouldPlayTurnNotification(prev.players, playerNameRef.current, data.currentTurn, prev.currentTurn)) {
+          soundRef.current.playNotification();
         }
 
         return {
@@ -383,8 +416,8 @@ export const useSocket = () => {
 
     socketInstance.on('playerWonButGameContinues', (data) => {
       setGameState(prev => {
-        if (shouldPlayTurnNotification(prev.players, data.currentTurn, prev.currentTurn)) {
-          playNotification();
+        if (shouldPlayTurnNotification(prev.players, playerNameRef.current, data.currentTurn, prev.currentTurn)) {
+          soundRef.current.playNotification();
         }
 
         return {
@@ -411,14 +444,14 @@ export const useSocket = () => {
         sessionStorage.setItem('gameState', JSON.stringify(newGameState));
         
         // Play appropriate end game sound
-        const me = newGameState.players.find(p => p.name === playerName);
+        const me = newGameState.players.find(p => p.name === playerNameRef.current);
         const isWinner = data.winner === me?.name;
         if (data.isDraw) {
-          playNotification();
+          soundRef.current.playNotification();
         } else if (isWinner) {
-          playGameWin();
+          soundRef.current.playGameWin();
         } else {
-          playGameLose();
+          soundRef.current.playGameLose();
         }
         
         return newGameState;
@@ -432,7 +465,7 @@ export const useSocket = () => {
     });
 
     socketInstance.on('newGameStarted', (data) => {
-      playSuccess();
+      soundRef.current.playSuccess();
 
       setGameState(prev => ({
         ...prev,
@@ -467,12 +500,12 @@ export const useSocket = () => {
 
     socketInstance.on('numberError', (message) => {
       setError(message);
-      playError();
+      soundRef.current.playError();
     });
 
     socketInstance.on('guessError', (message) => {
       setError(message);
-      playError();
+      soundRef.current.playError();
     });
 
     socketInstance.on('opponentDisconnected', (data) => {
@@ -504,7 +537,7 @@ export const useSocket = () => {
     });
 
     socketInstance.on('rematchRequested', () => {
-      playNotification();
+      soundRef.current.playNotification();
       setRematchState(prev => ({ ...prev, opponentRequested: true }));
     });
 
@@ -515,7 +548,7 @@ export const useSocket = () => {
     socketInstance.on('nameError', (message) => {
       setError(message);
       setGamePhase(GamePhase.LOBBY);
-      playError();
+      soundRef.current.playError();
     });
   };
 
@@ -589,7 +622,7 @@ export const useSocket = () => {
       if (socketRef.current && gameState.gameId) {
         socketRef.current.emit('requestRematch', { gameId: gameState.gameId });
         setRematchState(prev => ({ ...prev, requested: true }));
-        playNotification();
+        soundRef.current.playNotification();
       }
     },
     acceptRematch: () => {
