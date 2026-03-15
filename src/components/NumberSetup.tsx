@@ -74,7 +74,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
   const validationError = getValidationError(inputNumber);
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 pt-14">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <div className="text-zinc-500 text-sm mb-1">Game {gameNumber}</div>

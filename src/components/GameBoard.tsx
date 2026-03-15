@@ -128,7 +128,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   );
 
   return (
-    <div className="bg-zinc-950 p-2 md:p-4 pb-6">
+    <div className="bg-zinc-950 p-2 pt-14 md:p-4 md:pt-14 pb-6">
       <div className="max-w-5xl mx-auto">
         <div className="text-center mb-4">
           <h1 className="text-lg font-semibold text-zinc-100 mb-3">Game {gameNumber}</h1>
