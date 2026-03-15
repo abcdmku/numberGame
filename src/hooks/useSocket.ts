@@ -6,7 +6,7 @@ import { useSound } from './useSound';
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
-  const { playConnect, playDisconnect, playSuccess, playError, playNotification, playGameStart, playGameWin, playGameLose } = useSound();
+  const { playConnect, playDisconnect, playSuccess, playError, playNotification, playWarning, playGameStart, playGameWin, playGameLose } = useSound();
   
   const [sessionId, setSessionId] = useState<string | null>(() => {
     // Generate a unique session ID for this browser tab/window
@@ -66,6 +66,7 @@ export const useSocket = () => {
     playSuccess,
     playError,
     playNotification,
+    playWarning,
     playGameStart,
     playGameWin,
     playGameLose
@@ -92,11 +93,12 @@ export const useSocket = () => {
       playSuccess,
       playError,
       playNotification,
+      playWarning,
       playGameStart,
       playGameWin,
       playGameLose
     };
-  }, [playConnect, playDisconnect, playSuccess, playError, playNotification, playGameStart, playGameWin, playGameLose]);
+  }, [playConnect, playDisconnect, playSuccess, playError, playNotification, playWarning, playGameStart, playGameWin, playGameLose]);
 
   useEffect(() => {
     // Check for existing session in sessionStorage (per tab)
@@ -417,7 +419,7 @@ export const useSocket = () => {
     socketInstance.on('playerWonButGameContinues', (data) => {
       setGameState(prev => {
         if (shouldPlayTurnNotification(prev.players, playerNameRef.current, data.currentTurn, prev.currentTurn)) {
-          soundRef.current.playNotification();
+          soundRef.current.playWarning();
         }
 
         return {

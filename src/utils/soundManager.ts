@@ -79,6 +79,13 @@ class SoundManager {
     await this.createTone(880, 0.15);
   }
 
+  // Warning sound for must-guess-right pressure states
+  async playWarning() {
+    await this.createTone(740, 0.12, 'triangle', this.volume * 0.75);
+    await this.createTone(740, 0.12, 'triangle', this.volume * 0.75);
+    await this.createTone(587, 0.22, 'sawtooth', this.volume * 0.85);
+  }
+
   // Guess feedback sounds
   async playCorrectPosition() {
     await this.createTone(523, 0.1); // C5 - bright, positive
