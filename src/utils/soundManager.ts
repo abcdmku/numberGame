@@ -81,9 +81,16 @@ class SoundManager {
 
   // Warning sound for must-guess-right pressure states
   async playWarning() {
-    await this.createTone(740, 0.12, 'triangle', this.volume * 0.75);
-    await this.createTone(740, 0.12, 'triangle', this.volume * 0.75);
-    await this.createTone(587, 0.22, 'sawtooth', this.volume * 0.85);
+    await this.createTone(932, 0.1, 'square', this.volume * 0.85);
+    await this.createTone(932, 0.1, 'square', this.volume * 0.85);
+    await this.createTone(740, 0.24, 'sawtooth', this.volume * 0.95);
+  }
+
+  // Draw sound
+  async playDraw() {
+    await this.createTone(523, 0.12, 'triangle', this.volume * 0.7);
+    await this.createTone(659, 0.12, 'triangle', this.volume * 0.7);
+    await this.createTone(587, 0.18, 'triangle', this.volume * 0.7);
   }
 
   // Guess feedback sounds

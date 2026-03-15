@@ -6,7 +6,7 @@ import { useSound } from './useSound';
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
-  const { playConnect, playDisconnect, playSuccess, playError, playNotification, playWarning, playGameStart, playGameWin, playGameLose } = useSound();
+  const { playConnect, playDisconnect, playSuccess, playError, playNotification, playWarning, playDraw, playGameStart, playGameWin, playGameLose } = useSound();
   
   const [sessionId, setSessionId] = useState<string | null>(() => {
     // Generate a unique session ID for this browser tab/window
@@ -59,6 +59,7 @@ export const useSocket = () => {
     opponentRequested: false
   });
   const [opponentStatus, setOpponentStatus] = useState<'connected' | 'disconnected' | 'reconnecting'>('connected');
+  const gameStateRef = useRef(gameState);
   const playerNameRef = useRef(playerName);
   const soundRef = useRef({
     playConnect,
@@ -67,6 +68,7 @@ export const useSocket = () => {
     playError,
     playNotification,
     playWarning,
+    playDraw,
     playGameStart,
     playGameWin,
     playGameLose
@@ -83,6 +85,10 @@ export const useSocket = () => {
   };
 
   useEffect(() => {
+    gameStateRef.current = gameState;
+  }, [gameState]);
+
+  useEffect(() => {
     playerNameRef.current = playerName;
   }, [playerName]);
 
@@ -94,11 +100,12 @@ export const useSocket = () => {
       playError,
       playNotification,
       playWarning,
+      playDraw,
       playGameStart,
       playGameWin,
       playGameLose
     };
-  }, [playConnect, playDisconnect, playSuccess, playError, playNotification, playWarning, playGameStart, playGameWin, playGameLose]);
+  }, [playConnect, playDisconnect, playSuccess, playError, playNotification, playWarning, playDraw, playGameStart, playGameWin, playGameLose]);
 
   useEffect(() => {
     // Check for existing session in sessionStorage (per tab)
@@ -403,61 +410,71 @@ export const useSocket = () => {
     });
 
     socketInstance.on('guessMade', (data) => {
-      setGameState(prev => {
-        if (shouldPlayTurnNotification(prev.players, playerNameRef.current, data.currentTurn, prev.currentTurn)) {
-          soundRef.current.playNotification();
-        }
+      const previousGameState = gameStateRef.current;
+      const nextGameState = {
+        ...previousGameState,
+        currentTurn: data.currentTurn,
+        allGuesses: data.allGuesses
+      };
 
-        return {
-          ...prev,
-          currentTurn: data.currentTurn,
-          allGuesses: data.allGuesses
-        };
-      });
+      gameStateRef.current = nextGameState;
+      setGameState(nextGameState);
+
+      if (shouldPlayTurnNotification(previousGameState.players, playerNameRef.current, data.currentTurn, previousGameState.currentTurn)) {
+        soundRef.current.playNotification();
+      }
     });
 
     socketInstance.on('playerWonButGameContinues', (data) => {
-      setGameState(prev => {
-        if (shouldPlayTurnNotification(prev.players, playerNameRef.current, data.currentTurn, prev.currentTurn)) {
-          soundRef.current.playWarning();
-        }
+      const previousGameState = gameStateRef.current;
+      const nextGameState = {
+        ...previousGameState,
+        currentTurn: data.currentTurn,
+        allGuesses: data.allGuesses,
+        potentialWinner: data.winnerName
+      };
+      const myId = previousGameState.players.find(player => player.name === playerNameRef.current)?.id;
+      const isDangerState = Boolean(
+        myId &&
+        nextGameState.currentTurn === myId &&
+        nextGameState.potentialWinner &&
+        nextGameState.potentialWinner !== playerNameRef.current
+      );
 
-        return {
-          ...prev,
-          currentTurn: data.currentTurn,
-          allGuesses: data.allGuesses,
-          potentialWinner: data.winnerName
-        };
-      });
+      gameStateRef.current = nextGameState;
+      setGameState(nextGameState);
+
+      if (isDangerState) {
+        soundRef.current.playWarning();
+      }
     });
 
     socketInstance.on('gameEnded', (data) => {
-      setGameState(prev => {
-        const newGameState = {
-          ...prev,
-          gameEnded: true,
-          winner: data.winner,
-          isDraw: data.isDraw || false,
-          players: data.players.map((p: any) => ({
-            ...prev.players.find(pp => pp.id === p.id),
-            ...p
-          }))
-        };
-        sessionStorage.setItem('gameState', JSON.stringify(newGameState));
-        
-        // Play appropriate end game sound
-        const me = newGameState.players.find(p => p.name === playerNameRef.current);
-        const isWinner = data.winner === me?.name;
-        if (data.isDraw) {
-          soundRef.current.playNotification();
-        } else if (isWinner) {
-          soundRef.current.playGameWin();
-        } else {
-          soundRef.current.playGameLose();
-        }
-        
-        return newGameState;
-      });
+      const previousGameState = gameStateRef.current;
+      const newGameState = {
+        ...previousGameState,
+        gameEnded: true,
+        winner: data.winner,
+        isDraw: data.isDraw || false,
+        players: data.players.map((p: any) => ({
+          ...previousGameState.players.find(pp => pp.id === p.id),
+          ...p
+        }))
+      };
+
+      gameStateRef.current = newGameState;
+      setGameState(newGameState);
+      sessionStorage.setItem('gameState', JSON.stringify(newGameState));
+      
+      const me = newGameState.players.find(p => p.name === playerNameRef.current);
+      const isWinner = data.winner === me?.name;
+      if (data.isDraw) {
+        soundRef.current.playDraw();
+      } else if (isWinner) {
+        soundRef.current.playGameWin();
+      } else {
+        soundRef.current.playGameLose();
+      }
       
       setIsTransitioning(true);
       setTimeout(() => {

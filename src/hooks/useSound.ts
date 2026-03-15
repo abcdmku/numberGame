@@ -47,6 +47,7 @@ export const useSound = () => {
     playError: () => playSound(() => soundManager.playError()),
     playNotification: () => playSound(() => soundManager.playNotification()),
     playWarning: () => playSound(() => soundManager.playWarning()),
+    playDraw: () => playSound(() => soundManager.playDraw()),
     playCorrectPosition: () => playSound(() => soundManager.playCorrectPosition()),
     playCorrectDigit: () => playSound(() => soundManager.playCorrectDigit()),
     playNoMatch: () => playSound(() => soundManager.playNoMatch()),
