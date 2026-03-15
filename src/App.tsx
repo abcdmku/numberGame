@@ -1,5 +1,4 @@
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { useSocket } from './hooks/useSocket';
 import { Lobby } from './components/Lobby';
 import { WaitingRoom } from './components/WaitingRoom';
@@ -8,6 +7,7 @@ import { GameBoard } from './components/GameBoard';
 import { GameResults } from './components/GameResults';
 import { ErrorDisplay } from './components/ErrorDisplay';
 import { SoundToggle } from './components/SoundToggle';
+import { GameTitle } from './components/GameTitle';
 import { GamePhase } from './types/game';
 
 function App() {
@@ -110,15 +110,11 @@ function App() {
         </div>
       )}
 
-      {/* Return to Lobby Button (shown in game states) */}
-      {(gamePhase === GamePhase.SETUP || gamePhase === GamePhase.PLAYING) && (
-        <button
-          onClick={handleReturnToLobby}
-          className="fixed top-4 left-4 z-40 bg-zinc-800 text-zinc-300 p-2.5 rounded-lg hover:bg-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors duration-200 flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline text-sm">Return to Lobby</span>
-        </button>
+      {/* Game title header (shown on all non-lobby screens) */}
+      {gamePhase !== GamePhase.LOBBY && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 sm:left-4 sm:translate-x-0 z-40">
+          <GameTitle onClick={handleReturnToLobby} />
+        </div>
       )}
 
       <div className={`transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
@@ -127,20 +123,11 @@ function App() {
         )}
 
         {gamePhase === GamePhase.WAITING && (
-          <>
-            <button
-              onClick={handleReturnToLobby}
-              className="fixed top-4 left-4 z-40 bg-zinc-800 text-zinc-300 p-2.5 rounded-lg hover:bg-zinc-700 focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-colors duration-200 flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline text-sm">Return to Lobby</span>
-            </button>
-            <WaitingRoom
-              playerName={playerName}
-              opponentStatus={opponentStatus}
-              onWaitForOpponent={waitForOpponent}
-            />
-          </>
+          <WaitingRoom
+            playerName={playerName}
+            opponentStatus={opponentStatus}
+            onWaitForOpponent={waitForOpponent}
+          />
         )}
 
         {gamePhase === GamePhase.SETUP && (

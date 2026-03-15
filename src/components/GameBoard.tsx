@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { Player, GuessData } from '../types/game';
 import { VersionDisplay } from './VersionDisplay';
@@ -32,7 +32,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 }) => {
   const [guess, setGuess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [waitDots, setWaitDots] = useState('');
   const { playButtonClick, playKeypress } = useSound();
+
+  useEffect(() => {
+    if (isMyTurn) { setWaitDots(''); return; }
+    const id = setInterval(() => setWaitDots(p => p.length >= 3 ? '' : p + '.'), 500);
+    return () => clearInterval(id);
+  }, [isMyTurn]);
 
   const me = players.find(p => p.id === myId);
   const opponent = players.find(p => p.id !== myId);
@@ -254,9 +261,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
               {!isMyTurn && (
                 <div className="text-center py-6">
-                  <div className="w-5 h-5 border-2 border-zinc-700 border-t-zinc-400 rounded-full animate-spin mx-auto mb-3"></div>
                   <p className="text-zinc-400 text-sm">
-                    Waiting for {opponent?.name}...
+                    Waiting for {opponent?.name}{waitDots}
                   </p>
                 </div>
               )}

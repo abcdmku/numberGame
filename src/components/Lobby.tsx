@@ -27,7 +27,10 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-zinc-100 mb-2">Number Master</h1>
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <img src="/favicon.svg" alt="" aria-hidden="true" className="w-10 h-10" />
+            <h1 className="text-2xl font-semibold text-zinc-100">Number Master</h1>
+          </div>
           <p className="text-zinc-500 text-sm">Real-time multiplayer number guessing game</p>
         </div>
 
