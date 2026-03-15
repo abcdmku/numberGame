@@ -35,15 +35,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const [waitDots, setWaitDots] = useState('');
   const { playButtonClick, playKeypress } = useSound();
 
+  const me = players.find(p => p.id === myId);
+  const opponent = players.find(p => p.id !== myId);
+  const isMyTurn = currentTurn === myId;
+
   useEffect(() => {
     if (isMyTurn) { setWaitDots(''); return; }
     const id = setInterval(() => setWaitDots(p => p.length >= 3 ? '' : p + '.'), 500);
     return () => clearInterval(id);
   }, [isMyTurn]);
-
-  const me = players.find(p => p.id === myId);
-  const opponent = players.find(p => p.id !== myId);
-  const isMyTurn = currentTurn === myId;
 
   const myGuesses = allGuesses.filter(g => g.playerId === myId);
   const opponentGuesses = allGuesses.filter(g => g.playerId !== myId);
