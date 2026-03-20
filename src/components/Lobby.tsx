@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { VersionDisplay } from './VersionDisplay';
 import { useSound } from '../hooks/useSound';
 
 interface LobbyProps {
   onJoin: (name: string) => void;
+  joinError?: string;
 }
 
-export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
+export const Lobby: React.FC<LobbyProps> = ({ onJoin, joinError = '' }) => {
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { playButtonClick, playKeypress, playSuccess } = useSound();
+
+  useEffect(() => {
+    if (joinError) {
+      setIsSubmitting(false);
+    }
+  }, [joinError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +31,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-2">
@@ -45,6 +52,9 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin }) => {
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
+                if (isSubmitting) {
+                  setIsSubmitting(false);
+                }
                 if (e.target.value.length > name.length) {
                   playKeypress();
                 }

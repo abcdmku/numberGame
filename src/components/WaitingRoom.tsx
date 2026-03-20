@@ -23,7 +23,7 @@ export const WaitingRoom: React.FC<WaitingRoomProps> = ({
   }, []);
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 pt-14">
+    <div className="min-h-screen flex items-center justify-center p-4 pt-14">
       <div className="w-full max-w-sm text-center">
         <div className="w-6 h-6 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin mx-auto mb-6"></div>
 

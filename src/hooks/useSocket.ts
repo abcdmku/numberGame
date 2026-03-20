@@ -3,6 +3,17 @@ import { io, Socket } from 'socket.io-client';
 import { GameState, Player, GuessData, GamePhase } from '../types/game';
 import { useSound } from './useSound';
 
+const createEmptyGameState = (): GameState => ({
+  gameId: null,
+  players: [],
+  currentTurn: null,
+  gameStarted: false,
+  gameEnded: false,
+  winner: null,
+  allGuesses: [],
+  gameNumber: 1
+});
+
 export const useSocket = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -14,16 +25,7 @@ export const useSocket = () => {
     return existingSessionId || `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   });
   const [isReconnecting, setIsReconnecting] = useState(false);
-  const [gameState, setGameState] = useState<GameState>({
-    gameId: null,
-    players: [],
-    currentTurn: null,
-    gameStarted: false,
-    gameEnded: false,
-    winner: null,
-    allGuesses: [],
-    gameNumber: 1
-  });
+  const [gameState, setGameState] = useState<GameState>(createEmptyGameState);
   const [gamePhase, setGamePhase] = useState<GamePhase>(() => {
     // Determine initial game phase based on saved state
     const savedGameState = sessionStorage.getItem('gameState');
@@ -197,6 +199,8 @@ export const useSocket = () => {
   }, []);
 
   const resetToLobby = () => {
+    const clearedGameState = createEmptyGameState();
+
     // Clear session storage for this tab
     sessionStorage.removeItem('gameSessionId');
     sessionStorage.removeItem('playerName');
@@ -213,16 +217,8 @@ export const useSocket = () => {
     }
     
     // Reset all state
-    setGameState({
-      gameId: null,
-      players: [],
-      currentTurn: null,
-      gameStarted: false,
-      gameEnded: false,
-      winner: null,
-      allGuesses: [],
-      gameNumber: 1
-    });
+    gameStateRef.current = clearedGameState;
+    setGameState(clearedGameState);
     setGamePhase(GamePhase.LOBBY);
     setPlayerName('');
     setMyNumber('');
@@ -290,6 +286,8 @@ export const useSocket = () => {
     });
 
     socketInstance.on('sessionNotFound', () => {
+      const clearedGameState = createEmptyGameState();
+
       console.log('Session not found, clearing storage and returning to lobby');
       sessionStorage.removeItem('gameSessionId');
       sessionStorage.removeItem('playerName');
@@ -297,10 +295,14 @@ export const useSocket = () => {
       sessionStorage.removeItem('myNumber');
       setSessionId(null);
       setIsReconnecting(false);
+      gameStateRef.current = clearedGameState;
+      setGameState(clearedGameState);
       setGamePhase(GamePhase.LOBBY);
       setPlayerName('');
       setMyNumber('');
       setError('');
+      setOpponentStatus('connected');
+      setRematchState({ requested: false, opponentRequested: false });
     });
     
     socketInstance.on('sessionReconnected', (data) => {
@@ -330,10 +332,20 @@ export const useSocket = () => {
     });
     
     socketInstance.on('waitingForPlayer', (data) => {
+      const clearedGameState = createEmptyGameState();
+
       if (data?.sessionId) {
         setSessionId(data.sessionId);
         sessionStorage.setItem('gameSessionId', data.sessionId);
       }
+
+      gameStateRef.current = clearedGameState;
+      setGameState(clearedGameState);
+      setMyNumber('');
+      setOpponentStatus('connected');
+      setRematchState({ requested: false, opponentRequested: false });
+      sessionStorage.removeItem('gameState');
+      sessionStorage.removeItem('myNumber');
       
       setIsTransitioning(true);
       setTimeout(() => {
@@ -344,10 +356,6 @@ export const useSocket = () => {
     });
 
     socketInstance.on('gameFound', (data) => {
-      if (data.sessionId) {
-        setSessionId(data.sessionId);
-        sessionStorage.setItem('gameSessionId', data.sessionId);
-      }
       const newGameState = {
         gameId: data.gameId,
         players: data.players,
@@ -358,7 +366,12 @@ export const useSocket = () => {
         allGuesses: [],
         gameNumber: 1
       };
+      gameStateRef.current = newGameState;
       setGameState(newGameState);
+      setMyNumber('');
+      setOpponentStatus('connected');
+      setRematchState({ requested: false, opponentRequested: false });
+      sessionStorage.removeItem('myNumber');
       
       soundRef.current.playNotification();
       
@@ -398,6 +411,7 @@ export const useSocket = () => {
         sessionStorage.setItem('gameState', JSON.stringify(newGameState));
         return newGameState;
       });
+      setOpponentStatus('connected');
       
       soundRef.current.playGameStart();
       
@@ -486,20 +500,27 @@ export const useSocket = () => {
     socketInstance.on('newGameStarted', (data) => {
       soundRef.current.playSuccess();
 
-      setGameState(prev => ({
-        ...prev,
-        currentTurn: data.currentTurn,
-        gameStarted: false,
-        gameEnded: false,
-        winner: null,
-        allGuesses: [],
-        gameNumber: data.gameNumber,
-        players: data.players.map((p: any) => ({
-          ...prev.players.find(pp => pp.id === p.id),
-          ...p
-        })),
-        potentialWinner: null
-      }));
+      setGameState(prev => {
+        const newGameState = {
+          ...prev,
+          currentTurn: data.currentTurn,
+          gameStarted: false,
+          gameEnded: false,
+          winner: null,
+          allGuesses: [],
+          gameNumber: data.gameNumber,
+          players: data.players.map((p: any) => ({
+            ...prev.players.find(pp => pp.id === p.id),
+            ...p
+          })),
+          potentialWinner: null,
+          isDraw: false
+        };
+        gameStateRef.current = newGameState;
+        sessionStorage.setItem('gameState', JSON.stringify(newGameState));
+        return newGameState;
+      });
+      setOpponentStatus('connected');
       
       setIsTransitioning(true);
       setTimeout(() => {
@@ -549,10 +570,8 @@ export const useSocket = () => {
     });
     
     socketInstance.on('opponentLeft', () => {
-      setError('Your opponent has left the game. Returning to lobby...');
-      setTimeout(() => {
-        resetToLobby();
-      }, 3000);
+      setRematchState({ requested: false, opponentRequested: false });
+      setOpponentStatus('disconnected');
     });
 
     socketInstance.on('rematchRequested', () => {
@@ -565,6 +584,16 @@ export const useSocket = () => {
     });
 
     socketInstance.on('nameError', (message) => {
+      const clearedGameState = createEmptyGameState();
+
+      sessionStorage.removeItem('gameSessionId');
+      sessionStorage.removeItem('gameState');
+      sessionStorage.removeItem('myNumber');
+      setSessionId(null);
+      gameStateRef.current = clearedGameState;
+      setGameState(clearedGameState);
+      setOpponentStatus('connected');
+      setRematchState({ requested: false, opponentRequested: false });
       setError(message);
       setGamePhase(GamePhase.LOBBY);
       soundRef.current.playError();
@@ -580,6 +609,9 @@ export const useSocket = () => {
       setPlayerName(name.trim());
       sessionStorage.setItem('playerName', name.trim());
       sessionStorage.setItem('gameSessionId', newSessionId);
+      sessionStorage.removeItem('gameState');
+      sessionStorage.removeItem('myNumber');
+      setError('');
       socketRef.current.emit('joinLobby', { playerName: name.trim(), sessionId: newSessionId });
     }
   };

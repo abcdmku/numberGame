@@ -75,6 +75,10 @@ const playerSessions = new Map<string, PlayerSession>(); // Map sessionId -> Pla
 const sessionsBySocket = new Map<string, string>(); // Map socketId -> sessionId for quick lookup
 const disconnectedPlayers = new Map<string, DisconnectedPlayer>(); // Map sessionId -> DisconnectedPlayer
 
+function normalizePlayerName(playerName: string): string {
+  return playerName.trim().toLowerCase();
+}
+
 // Helper function to create game state data
 function createGameStateData(game: Game): GameStateData {
   return {
@@ -180,6 +184,7 @@ io.on('connection', (socket) => {
     // Update socket references
     updateSessionSocket(session, socket.id, sessionsBySocket, sessionId);
     playerSockets.set(socket.id, socket);
+    usedNames.set(socket.id, normalizePlayerName(session.playerName));
     
     // Update game player references FIRST
     const updatedPlayerId = updateGamePlayerReferences(game, sessionId, socket.id);
@@ -194,6 +199,32 @@ io.on('connection', (socket) => {
   });
   
   socket.on('joinLobby', ({ playerName, sessionId }) => {
+    // Check if this socket was in a previous game (player leaving results screen)
+    const previousSessionId = sessionsBySocket.get(socket.id);
+    if (previousSessionId && previousSessionId !== sessionId) {
+      const previousSession = playerSessions.get(previousSessionId);
+      waitingPlayers.delete(socket.id);
+      disconnectedPlayers.delete(previousSessionId);
+
+      if (previousSession?.gameId) {
+        const previousGame = activeGames.get(previousSession.gameId);
+        if (previousGame) {
+          // Notify opponent that this player left
+          const opponentId = Object.keys(previousGame.players).find(id => id !== previousSession.playerId);
+          if (opponentId) {
+            const opponent = previousGame.players[opponentId];
+            if (opponent?.socketId && playerSockets.has(opponent.socketId)) {
+              io.to(opponent.socketId).emit('opponentLeft');
+            }
+          }
+          // Leave the old game room
+          socket.leave(previousSession.gameId);
+          activeGames.delete(previousSession.gameId);
+        }
+      }
+      playerSessions.delete(previousSessionId);
+    }
+
     // Check if this session already exists and has an active game
     const existingSession = playerSessions.get(sessionId);
     if (existingSession?.gameId) {
@@ -202,6 +233,7 @@ io.on('connection', (socket) => {
         // Update socket references for existing session
         updateSessionSocket(existingSession, socket.id, sessionsBySocket, sessionId);
         playerSockets.set(socket.id, socket);
+        usedNames.set(socket.id, normalizePlayerName(existingSession.playerName));
         
         // Update player data in game FIRST
         const updatedPlayerId = updateGamePlayerReferences(game, sessionId, socket.id);
@@ -220,8 +252,10 @@ io.on('connection', (socket) => {
     }
     
     // Check if name is already in use by a different session
-    const normalizedName = playerName.trim().toLowerCase();
-    const isNameTaken = Array.from(usedNames.values()).includes(normalizedName);
+    const normalizedName = normalizePlayerName(playerName);
+    const isNameTaken = Array.from(usedNames.entries()).some(([usedSocketId, usedName]) => (
+      usedSocketId !== socket.id && usedName === normalizedName
+    ));
     if (isNameTaken) {
       socket.emit('nameError', 'This name is already in use. Please choose a different name.');
       return;
@@ -279,7 +313,6 @@ io.on('connection', (socket) => {
       // Notify both players
       io.to(game.id).emit('gameFound', {
         gameId: game.id,
-        sessionId: sessionId,
         players: Object.values(game.players),
         currentTurn: game.currentTurn
       });
@@ -496,8 +529,17 @@ io.on('connection', (socket) => {
         }
         
         console.log(`Player ${session.playerName} disconnected from game ${session.gameId}, session preserved`);
+      } else if (game) {
+        // Game ended - notify opponent that this player left
+        const opponentId = Object.keys(game.players).find(id => id !== session.playerId);
+        if (opponentId) {
+          const opponent = game.players[opponentId];
+          if (opponent?.socketId && playerSockets.has(opponent.socketId)) {
+            io.to(opponent.socketId).emit('opponentLeft');
+          }
+        }
+        playerSessions.delete(sessionId);
       } else {
-        // Game ended, clean up completely
         playerSessions.delete(sessionId);
       }
     } else {

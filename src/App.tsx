@@ -8,6 +8,7 @@ import { GameResults } from './components/GameResults';
 import { ErrorDisplay } from './components/ErrorDisplay';
 import { SoundToggle } from './components/SoundToggle';
 import { GameTitle } from './components/GameTitle';
+import { MatrixBackground } from './components/MatrixBackground';
 import { GamePhase } from './types/game';
 
 function App() {
@@ -59,8 +60,9 @@ function App() {
   // Show reconnecting screen
   if (isReconnecting) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
-        <div className="text-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <MatrixBackground />
+        <div className="text-center relative z-10">
           <div className="w-8 h-8 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin mx-auto mb-6"></div>
           <h2 className="text-xl font-semibold text-zinc-100 mb-2">Reconnecting...</h2>
           <p className="text-zinc-500 text-sm">Restoring your game session</p>
@@ -71,6 +73,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-zinc-950 overflow-x-hidden select-none">
+      <MatrixBackground />
       <ErrorDisplay error={error} onClose={() => setError('')} />
       <SoundToggle />
 
@@ -117,9 +120,9 @@ function App() {
         </div>
       )}
 
-      <div className={`transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={`relative z-10 transition-opacity duration-300 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
         {gamePhase === GamePhase.LOBBY && (
-          <Lobby onJoin={joinLobby} />
+          <Lobby onJoin={joinLobby} joinError={error} />
         )}
 
         {gamePhase === GamePhase.WAITING && (
@@ -171,6 +174,7 @@ function App() {
             onJoinLobby={joinLobby}
             playerName={playerName}
             gameState={gameState}
+            opponentLeft={opponentStatus === 'disconnected'}
           />
         )}
       </div>

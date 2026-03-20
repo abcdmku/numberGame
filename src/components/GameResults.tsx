@@ -21,6 +21,7 @@ interface GameResultsProps {
   gameState: {
     isDraw?: boolean;
   };
+  opponentLeft?: boolean;
 }
 
 export const GameResults: React.FC<GameResultsProps> = ({
@@ -35,7 +36,8 @@ export const GameResults: React.FC<GameResultsProps> = ({
   onAcceptRematch,
   onJoinLobby,
   playerName,
-  gameState
+  gameState,
+  opponentLeft = false
 }) => {
   const me = players.find(p => p.id === myId);
   const opponent = players.find(p => p.id !== myId);
@@ -95,7 +97,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 pt-14">
+    <div className="min-h-screen flex items-center justify-center p-4 pt-14">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <div className="text-zinc-500 text-sm mb-1">Game {gameNumber}</div>
@@ -165,8 +167,24 @@ export const GameResults: React.FC<GameResultsProps> = ({
           </div>
         </div>
 
+        {/* Opponent left */}
+        {opponentLeft && (
+          <div className="space-y-3">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-center">
+              <p className="text-zinc-400 text-sm">{opponent?.name || 'Your opponent'} has left the game.</p>
+            </div>
+            <button
+              onClick={() => onJoinLobby(playerName)}
+              className="w-full bg-emerald-600 text-white py-2.5 px-4 rounded-lg font-medium hover:bg-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              <Users className="w-4 h-4" />
+              Find New Opponent
+            </button>
+          </div>
+        )}
+
         {/* Rematch request from opponent */}
-        {rematchState.opponentRequested && !rematchState.requested && (
+        {!opponentLeft && rematchState.opponentRequested && !rematchState.requested && (
           <div className="space-y-3">
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
               <p className="text-zinc-300 text-sm text-center mb-4">
@@ -193,7 +211,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
         )}
 
         {/* Waiting for opponent response */}
-        {rematchState.requested && !rematchState.opponentRequested && (
+        {!opponentLeft && rematchState.requested && !rematchState.opponentRequested && (
           <div className="space-y-3">
             <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4 text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
@@ -212,7 +230,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
         )}
 
         {/* Initial options */}
-        {!rematchState.requested && !rematchState.opponentRequested && (
+        {!opponentLeft && !rematchState.requested && !rematchState.opponentRequested && (
           <div className="flex gap-3">
             <button
               onClick={onRequestRematch}

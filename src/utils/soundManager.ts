@@ -1,4 +1,8 @@
 // Sound Manager for game audio effects
+interface AudioWindow extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
+
 class SoundManager {
   private audioContext: AudioContext | null = null;
   private enabled: boolean = true;
@@ -9,9 +13,18 @@ class SoundManager {
   }
 
   private initializeAudio() {
+    if (this.audioContext && this.audioContext.state !== 'closed') {
+      return;
+    }
+
     try {
       // Initialize Web Audio API
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const audioContextConstructor = window.AudioContext || (window as AudioWindow).webkitAudioContext;
+      if (!audioContextConstructor) {
+        throw new Error('Web Audio API not supported');
+      }
+
+      this.audioContext = new audioContextConstructor();
     } catch (error) {
       console.warn('Web Audio API not supported:', error);
     }
@@ -154,8 +167,24 @@ class SoundManager {
 
   setEnabled(enabled: boolean) {
     this.enabled = enabled;
+
+    if (!this.audioContext || this.audioContext.state === 'closed') {
+      if (enabled) {
+        this.initializeAudio();
+      }
+      return;
+    }
+
     if (enabled) {
-      this.initializeAudio();
+      if (this.audioContext.state === 'suspended') {
+        this.resumeAudioContext().catch((error) => {
+          console.warn('Failed to resume audio context:', error);
+        });
+      }
+    } else if (this.audioContext.state === 'running') {
+      this.audioContext.suspend().catch((error) => {
+        console.warn('Failed to suspend audio context:', error);
+      });
     }
   }
 
