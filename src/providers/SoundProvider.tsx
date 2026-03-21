@@ -3,31 +3,32 @@ import { SoundContext } from '../context/SoundContext';
 import { soundManager } from '../utils/soundManager';
 
 const SOUND_ENABLED_STORAGE_KEY = 'soundEnabled';
-const SOUND_VOLUME_STORAGE_KEY = 'soundVolume';
+const SFX_VOLUME_STORAGE_KEY = 'sfxVolume';
 const MUSIC_ENABLED_STORAGE_KEY = 'musicEnabled';
+const MUSIC_VOLUME_STORAGE_KEY = 'musicVolume';
 const BACKGROUND_TRACK_PATH = '/audio/soft-looping-stage.mp3';
-const BACKGROUND_TRACK_VOLUME = 0.22;
 
 const readStoredBoolean = (key: string, fallbackValue: boolean) => {
   const savedValue = localStorage.getItem(key);
   return savedValue !== null ? JSON.parse(savedValue) : fallbackValue;
 };
 
-const readStoredVolume = () => {
-  const savedValue = localStorage.getItem(SOUND_VOLUME_STORAGE_KEY);
-  return savedValue !== null ? parseFloat(savedValue) : 0.3;
+const readStoredNumber = (key: string, fallbackValue: number) => {
+  const savedValue = localStorage.getItem(key);
+  return savedValue !== null ? parseFloat(savedValue) : fallbackValue;
 };
 
 export const SoundProvider = ({ children }: PropsWithChildren) => {
   const [soundEnabled, setSoundEnabled] = useState(() => readStoredBoolean(SOUND_ENABLED_STORAGE_KEY, true));
   const [musicEnabled, setMusicEnabled] = useState(() => readStoredBoolean(MUSIC_ENABLED_STORAGE_KEY, true));
-  const [volume, setVolume] = useState(readStoredVolume);
+  const [sfxVolume, setSfxVolume] = useState(() => readStoredNumber(SFX_VOLUME_STORAGE_KEY, 0.5));
+  const [musicVolume, setMusicVolume] = useState(() => readStoredNumber(MUSIC_VOLUME_STORAGE_KEY, 0.75));
   const backgroundTrackRef = useRef<HTMLAudioElement | null>(null);
   const soundManagerInitializedRef = useRef(false);
 
   if (!soundManagerInitializedRef.current) {
     soundManager.setEnabled(soundEnabled);
-    soundManager.setVolume(volume);
+    soundManager.setVolume(sfxVolume);
     soundManagerInitializedRef.current = true;
   }
 
@@ -35,7 +36,7 @@ export const SoundProvider = ({ children }: PropsWithChildren) => {
     const backgroundTrack = new Audio(BACKGROUND_TRACK_PATH);
     backgroundTrack.loop = true;
     backgroundTrack.preload = 'auto';
-    backgroundTrack.volume = BACKGROUND_TRACK_VOLUME;
+    backgroundTrack.volume = musicVolume;
     backgroundTrackRef.current = backgroundTrack;
 
     return () => {
@@ -52,9 +53,16 @@ export const SoundProvider = ({ children }: PropsWithChildren) => {
   }, [soundEnabled]);
 
   useEffect(() => {
-    soundManager.setVolume(volume);
-    localStorage.setItem(SOUND_VOLUME_STORAGE_KEY, volume.toString());
-  }, [volume]);
+    soundManager.setVolume(sfxVolume);
+    localStorage.setItem(SFX_VOLUME_STORAGE_KEY, sfxVolume.toString());
+  }, [sfxVolume]);
+
+  useEffect(() => {
+    localStorage.setItem(MUSIC_VOLUME_STORAGE_KEY, musicVolume.toString());
+    if (backgroundTrackRef.current) {
+      backgroundTrackRef.current.volume = musicVolume;
+    }
+  }, [musicVolume]);
 
   useEffect(() => {
     localStorage.setItem(MUSIC_ENABLED_STORAGE_KEY, JSON.stringify(musicEnabled));
@@ -107,8 +115,10 @@ export const SoundProvider = ({ children }: PropsWithChildren) => {
         setSoundEnabled,
         musicEnabled,
         setMusicEnabled,
-        volume,
-        setVolume,
+        sfxVolume,
+        setSfxVolume,
+        musicVolume,
+        setMusicVolume,
         playButtonClick: () => playSound(() => soundManager.playButtonClick()),
         playSuccess: () => playSound(() => soundManager.playSuccess()),
         playError: () => playSound(() => soundManager.playError()),

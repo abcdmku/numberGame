@@ -5,8 +5,10 @@ export interface SoundContextValue {
   setSoundEnabled: Dispatch<SetStateAction<boolean>>;
   musicEnabled: boolean;
   setMusicEnabled: Dispatch<SetStateAction<boolean>>;
-  volume: number;
-  setVolume: Dispatch<SetStateAction<number>>;
+  sfxVolume: number;
+  setSfxVolume: Dispatch<SetStateAction<number>>;
+  musicVolume: number;
+  setMusicVolume: Dispatch<SetStateAction<number>>;
   playButtonClick: () => void;
   playSuccess: () => void;
   playError: () => void;

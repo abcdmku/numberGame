@@ -100,7 +100,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           {guesses.map((guessData, index) => {
             const isWin = guessData.feedback.correctPosition === 5;
             return (
-              <div key={index} className={`grid grid-cols-4 py-1 px-1 border-t border-zinc-800/30 ${isWin ? 'bg-emerald-500/5' : ''}`}>
+              <div key={index} className={`grid grid-cols-4 items-center py-1 px-1 border-t border-zinc-800/30 ${isWin ? 'bg-emerald-500/5' : ''}`}>
                 <div className="text-center text-zinc-600 text-[10px]">{guessData.turn}</div>
                 <div className={`text-center font-mono text-xs ${isWin ? 'text-emerald-400 font-semibold' : 'text-zinc-100'}`}>
                   {guessData.guess}
@@ -128,48 +128,24 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   );
 
   return (
-    <div className="p-2 pt-14 md:p-4 md:pt-14 pb-6">
+    <div className="p-2 pt-11 md:p-4 md:pt-14 pb-6">
       <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-4">
-          <h1 className="text-lg font-semibold text-zinc-100 mb-3">Game {gameNumber}</h1>
-          <div className="flex items-center justify-center gap-6 text-sm text-zinc-400 mb-4">
-            <span>{me?.name}: <span className="text-emerald-400 font-medium">{me?.gamesWon ?? 0}</span></span>
-            <span className="text-zinc-700">|</span>
-            <span>{opponent?.name}: <span className="text-zinc-300 font-medium">{opponent?.gamesWon ?? 0}</span></span>
-          </div>
-
-          {/* Game Progress */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-zinc-100 font-mono">{myGuesses.length}</div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wider">Your Guesses</div>
-                <div className="w-full bg-zinc-800 rounded-full h-0.5 mt-2">
-                  <div
-                    className="h-0.5 bg-emerald-500 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min((myGuesses.length / 10) * 100, 100)}%` }}
-                  ></div>
-                </div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-semibold text-zinc-100 font-mono">{opponentGuesses.length}</div>
-                <div className="text-xs text-zinc-500 uppercase tracking-wider">{opponent?.name}'s Guesses</div>
-                <div className="w-full bg-zinc-800 rounded-full h-0.5 mt-2">
-                  <div
-                    className="h-0.5 bg-zinc-500 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min((opponentGuesses.length / 10) * 100, 100)}%` }}
-                  ></div>
-                </div>
-              </div>
+        <div className="text-center mb-2">
+          <h1 className="text-lg font-semibold text-zinc-100 mb-1">Game {gameNumber}</h1>
+          {gameNumber >= 2 && (
+            <div className="flex items-center justify-center gap-6 text-sm text-zinc-400 mb-2">
+              <span>{me?.name}: <span className="text-emerald-400 font-medium">{me?.gamesWon ?? 0}</span></span>
+              <span className="text-zinc-700">|</span>
+              <span>{opponent?.name}: <span className="text-zinc-300 font-medium">{opponent?.gamesWon ?? 0}</span></span>
             </div>
-          </div>
+          )}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-4">
+        <div className="grid lg:grid-cols-3 gap-2">
           {/* Game Input */}
           <div className="lg:col-span-1 order-2 lg:order-1">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-              <div className="mb-4">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+              <div className="mb-2">
                 <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm ${
                   isMyTurn
                     ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
@@ -188,7 +164,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               </div>
 
               {isMyTurn && (
-                <form onSubmit={handleSubmit} className="space-y-3">
+                <form onSubmit={handleSubmit} className="space-y-2">
                   <div>
                     <label htmlFor="guess" className="block text-xs font-medium text-zinc-400 mb-2">
                       Enter your guess
@@ -210,7 +186,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                       aria-describedby="guess-validation-status guess-requirements"
                       aria-invalid={guess.length > 0 && !isValid}
                       autoComplete="off"
-                      className="w-full px-4 py-3 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-2xl font-mono tracking-[0.3em] text-center placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-colors duration-200"
+                      className="w-full px-4 py-2 bg-zinc-950 border border-zinc-800 rounded-lg text-zinc-100 text-xl font-mono tracking-[0.3em] text-center placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-colors duration-200"
                       placeholder="12345"
                       maxLength={5}
                       required
@@ -260,7 +236,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               )}
 
               {!isMyTurn && (
-                <div className="text-center py-6">
+                <div className="text-center py-3">
                   <p className="text-zinc-400 text-sm">
                     Waiting for {opponent?.name}{waitDots}
                   </p>
@@ -271,7 +247,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
           {/* Game History */}
           <div className="lg:col-span-2 order-1 lg:order-2">
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-2">
               <div className="grid grid-cols-2 gap-2">
                 {renderGuessTable(myGuesses, 'You', 'No guesses yet', true)}
                 {renderGuessTable(opponentGuesses, opponent?.name ?? 'Opponent', `Waiting...`, false)}

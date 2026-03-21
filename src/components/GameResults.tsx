@@ -1,5 +1,5 @@
-import React from 'react';
-import { Home, Users, Check, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Home, Users, Check, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { Player } from '../types/game';
 import { VersionDisplay } from './VersionDisplay';
 
@@ -39,6 +39,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
   gameState,
   opponentLeft = false
 }) => {
+  const [showHistory, setShowHistory] = useState(false);
   const me = players.find(p => p.id === myId);
   const opponent = players.find(p => p.id !== myId);
   const isWinner = winner === me?.name;
@@ -48,12 +49,12 @@ export const GameResults: React.FC<GameResultsProps> = ({
   const renderGuessTable = (guesses: any[], label: string) => (
     <div>
       <h4 className="text-sm font-medium text-zinc-300 mb-3">{label}</h4>
-      <div className="max-h-60 overflow-y-auto">
+      <div className="max-h-40 overflow-y-auto">
         {!guesses || guesses.length === 0 ? (
           <p className="text-zinc-600 text-sm py-4 text-center">No guesses made</p>
         ) : (
           <div className="bg-zinc-900 border border-zinc-800 rounded-lg overflow-hidden">
-            <div className="grid grid-cols-4 gap-px text-xs font-medium text-zinc-500 uppercase tracking-wider p-2 border-b border-zinc-800">
+            <div className="grid grid-cols-4 gap-px text-xs font-medium text-zinc-500 uppercase tracking-wider p-1.5 border-b border-zinc-800">
               <div className="text-center">#</div>
               <div className="text-center">Guess</div>
               <div className="text-center">Pos</div>
@@ -62,7 +63,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
             {guesses.map((guessData: any, index: number) => {
               const isWin = guessData.feedback.correctPosition === 5;
               return (
-                <div key={index} className={`grid grid-cols-4 gap-px p-2 border-t border-zinc-800/50 ${
+                <div key={index} className={`grid grid-cols-4 gap-px p-1.5 border-t border-zinc-800/50 ${
                   isWin ? 'bg-emerald-500/5' : ''
                 }`}>
                   <div className="text-center text-zinc-500 text-sm">
@@ -97,9 +98,9 @@ export const GameResults: React.FC<GameResultsProps> = ({
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 pt-14">
+    <div className="min-h-screen flex items-center justify-center p-4 pt-12">
       <div className="w-full max-w-2xl">
-        <div className="text-center mb-8">
+        <div className="text-center mb-3">
           <div className="text-zinc-500 text-sm mb-1">Game {gameNumber}</div>
           <h2 className={`text-2xl font-semibold ${
             gameState.isDraw ? 'text-zinc-300' : isWinner ? 'text-amber-400' : 'text-red-400'
@@ -108,16 +109,16 @@ export const GameResults: React.FC<GameResultsProps> = ({
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-3 mb-6">
-          <div className={`border rounded-lg p-4 ${
+        <div className="grid md:grid-cols-2 gap-3 mb-3">
+          <div className={`border rounded-lg p-3 ${
             meIsWinner ? 'bg-amber-500/10 border-amber-500/40' : 'bg-zinc-900 border-zinc-800'
           }`}>
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-1.5">
               <div className={`w-2 h-2 rounded-full ${meIsWinner ? 'bg-amber-400' : 'bg-zinc-600'}`}></div>
               <span className={`text-sm font-medium ${meIsWinner ? 'text-amber-300' : 'text-zinc-100'}`}>{me?.name} (You)</span>
               {meIsWinner && <span className="text-xs text-amber-400 font-medium">Winner</span>}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="bg-zinc-800/50 rounded-md p-2">
                 <div className="text-xs text-zinc-500 mb-0.5">Your Number</div>
                 <div className="text-lg font-mono text-zinc-100 tracking-wider">{me?.number}</div>
@@ -133,15 +134,15 @@ export const GameResults: React.FC<GameResultsProps> = ({
             </div>
           </div>
 
-          <div className={`border rounded-lg p-4 ${
+          <div className={`border rounded-lg p-3 ${
             opponentIsWinner ? 'bg-amber-500/10 border-amber-500/40' : 'bg-zinc-900 border-zinc-800'
           }`}>
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 mb-1.5">
               <div className={`w-2 h-2 rounded-full ${opponentIsWinner ? 'bg-amber-400' : 'bg-zinc-600'}`}></div>
               <span className={`text-sm font-medium ${opponentIsWinner ? 'text-amber-300' : 'text-zinc-100'}`}>{opponent?.name}</span>
               {opponentIsWinner && <span className="text-xs text-amber-400 font-medium">Winner</span>}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="bg-zinc-800/50 rounded-md p-2">
                 <div className="text-xs text-zinc-500 mb-0.5">Their Number</div>
                 <div className="text-lg font-mono text-zinc-100 tracking-wider">{opponent?.number}</div>
@@ -159,12 +160,20 @@ export const GameResults: React.FC<GameResultsProps> = ({
         </div>
 
         {/* Complete Game History */}
-        <div className="mb-6 bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-zinc-100 mb-4">Game History</h3>
-          <div className="grid md:grid-cols-2 gap-4">
-            {renderGuessTable(me?.guesses || [], `${me?.name} (You)`)}
-            {renderGuessTable(opponent?.guesses || [], opponent?.name || 'Opponent')}
-          </div>
+        <div className="mb-3 bg-zinc-900 border border-zinc-800 rounded-lg p-3">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="flex items-center gap-2 w-full text-left"
+          >
+            {showHistory ? <ChevronDown className="w-3.5 h-3.5 text-zinc-400" /> : <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />}
+            <h3 className="text-sm font-medium text-zinc-100">Game History</h3>
+          </button>
+          {showHistory && (
+            <div className="grid md:grid-cols-2 gap-4 mt-4">
+              {renderGuessTable(me?.guesses || [], `${me?.name} (You)`)}
+              {renderGuessTable(opponent?.guesses || [], opponent?.name || 'Opponent')}
+            </div>
+          )}
         </div>
 
         {/* Opponent left */}

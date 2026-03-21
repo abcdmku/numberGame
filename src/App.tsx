@@ -115,7 +115,7 @@ function App() {
 
       {/* Game title header (shown on all non-lobby screens) */}
       {gamePhase !== GamePhase.LOBBY && (
-        <div className="fixed top-3 left-1/2 -translate-x-1/2 sm:left-4 sm:translate-x-0 z-40">
+        <div className="fixed top-2 left-1/2 -translate-x-1/2 sm:left-3 sm:translate-x-0 z-40">
           <GameTitle onClick={handleReturnToLobby} />
         </div>
       )}

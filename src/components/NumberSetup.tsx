@@ -74,15 +74,15 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
   const validationError = getValidationError(inputNumber);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 pt-14">
+    <div className="min-h-screen flex items-center justify-center p-4 pt-12">
       <div className="w-full max-w-lg">
-        <div className="text-center mb-8">
-          <div className="text-zinc-500 text-sm mb-1">Game {gameNumber}</div>
-          <h2 className="text-xl font-semibold text-zinc-100 mb-1">Number Setup</h2>
+        <div className="text-center mb-3">
+          <div className="text-zinc-500 text-sm">Game {gameNumber}</div>
+          <h2 className="text-xl font-semibold text-zinc-100">Number Setup</h2>
           <p className="text-zinc-500 text-sm">Create your secret 5-digit number</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-3">
           <div className={`bg-zinc-900 border rounded-lg p-3 ${
             me?.ready ? 'border-emerald-500/50' : 'border-zinc-800'
           }`}>
@@ -117,7 +117,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
         </div>
 
         {!me?.ready && (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label htmlFor="secretNumber" className="block text-xs font-medium text-zinc-400 mb-2 uppercase tracking-wider">
                 Your Secret Number
@@ -139,7 +139,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
                 aria-describedby="number-validation-status number-requirements"
                 aria-invalid={inputNumber.length > 0 && !isValid}
                 autoComplete="off"
-                className="w-full px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-100 text-2xl font-mono tracking-[0.3em] text-center placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-colors duration-200"
+                className="w-full px-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-zinc-100 text-2xl font-mono tracking-[0.3em] text-center placeholder-zinc-600 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 transition-colors duration-200"
                 placeholder="12345"
                 maxLength={5}
                 required
@@ -197,7 +197,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
         )}
 
         {me?.ready && !opponent?.ready && (
-          <div className="text-center py-6">
+          <div className="text-center py-3">
             <div className="flex items-center justify-center gap-2 mb-2">
               <div className="w-4 h-4 border-2 border-zinc-700 border-t-emerald-500 rounded-full animate-spin"></div>
               <span className="text-zinc-400 text-sm">Waiting for {opponent?.name} to set their number</span>
@@ -207,7 +207,7 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
         )}
 
         {me?.ready && opponent?.ready && (
-          <div className="text-center py-6">
+          <div className="text-center py-3">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Check className="w-4 h-4 text-emerald-400" />
               <span className="text-zinc-100 text-sm font-medium">Both players ready!</span>
@@ -216,14 +216,6 @@ export const NumberSetup: React.FC<NumberSetupProps> = ({
           </div>
         )}
 
-        <div className="mt-8 bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-          <h3 className="text-xs font-medium text-zinc-300 mb-2 uppercase tracking-wider">Rules</h3>
-          <ul className="text-xs text-zinc-500 space-y-1">
-            <li>- Must be exactly 5 digits</li>
-            <li>- All digits must be unique (no repeats)</li>
-            <li>- Examples: <code className="font-mono text-zinc-400">12345</code>, <code className="font-mono text-zinc-400">01234</code>, <code className="font-mono text-zinc-400">98765</code></li>
-          </ul>
-        </div>
       </div>
       <VersionDisplay />
     </div>
