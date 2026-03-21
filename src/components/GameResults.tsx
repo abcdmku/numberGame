@@ -40,11 +40,12 @@ export const GameResults: React.FC<GameResultsProps> = ({
   opponentLeft = false
 }) => {
   const [showHistory, setShowHistory] = useState(false);
-  const me = players.find(p => p.id === myId);
-  const opponent = players.find(p => p.id !== myId);
+  const me = players.find(p => p.id === myId) ?? players.find(p => p.name === playerName);
+  const opponent = players.find(p => p.id !== me?.id) ?? players.find(p => p.name !== playerName);
   const isWinner = winner === me?.name;
   const meIsWinner = winner === me?.name;
   const opponentIsWinner = winner === opponent?.name;
+  const opponentNumber = opponent?.number;
 
   const renderGuessTable = (guesses: any[], label: string) => (
     <div>
@@ -58,7 +59,7 @@ export const GameResults: React.FC<GameResultsProps> = ({
               <div className="text-center">#</div>
               <div className="text-center">Guess</div>
               <div className="text-center">Pos</div>
-              <div className="text-center">Close</div>
+              <div className="text-center">N</div>
             </div>
             {guesses.map((guessData: any, index: number) => {
               const isWin = guessData.feedback.correctPosition === 5;
@@ -107,6 +108,18 @@ export const GameResults: React.FC<GameResultsProps> = ({
           }`}>
             {gameState.isDraw ? "It's a Draw" : isWinner ? 'You Won!' : `${winner} Won`}
           </h2>
+        </div>
+
+        <div className="mb-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-center">
+          <div className="text-xs font-medium uppercase tracking-[0.25em] text-emerald-400/80 mb-1">
+            Final Reveal
+          </div>
+          <div className="text-sm text-zinc-400 mb-1">
+            {opponent?.name || 'Your opponent'}&apos;s number
+          </div>
+          <div className="text-2xl font-mono font-semibold text-emerald-300 tracking-[0.35em]">
+            {opponentNumber || '-----'}
+          </div>
         </div>
 
         <div className="grid md:grid-cols-2 gap-3 mb-3">

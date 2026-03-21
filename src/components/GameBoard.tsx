@@ -95,7 +95,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             <div className="text-center">#</div>
             <div className="text-center">G</div>
             <div className="text-center">P</div>
-            <div className="text-center">C</div>
+            <div className="text-center">N</div>
           </div>
           {guesses.map((guessData, index) => {
             const isWin = guessData.feedback.correctPosition === 5;

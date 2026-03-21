@@ -126,7 +126,7 @@ export const Lobby: React.FC<LobbyProps> = ({ onJoin, joinError = '' }) => {
                   <span className="text-zinc-500">Right digit, right spot</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs mt-1.5">
-                  <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-400 rounded font-mono">C</span>
+                  <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-400 rounded font-mono">N</span>
                   <span className="text-zinc-500">Right digit, wrong spot</span>
                 </div>
                 <div className="flex items-center gap-3 text-xs mt-1.5">
