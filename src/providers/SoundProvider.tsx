@@ -21,7 +21,7 @@ const readStoredNumber = (key: string, fallbackValue: number) => {
 export const SoundProvider = ({ children }: PropsWithChildren) => {
   const [soundEnabled, setSoundEnabled] = useState(() => readStoredBoolean(SOUND_ENABLED_STORAGE_KEY, true));
   const [musicEnabled, setMusicEnabled] = useState(() => readStoredBoolean(MUSIC_ENABLED_STORAGE_KEY, true));
-  const [sfxVolume, setSfxVolume] = useState(() => readStoredNumber(SFX_VOLUME_STORAGE_KEY, 0.5));
+  const [sfxVolume, setSfxVolume] = useState(() => readStoredNumber(SFX_VOLUME_STORAGE_KEY, 0.25));
   const [musicVolume, setMusicVolume] = useState(() => readStoredNumber(MUSIC_VOLUME_STORAGE_KEY, 0.75));
   const backgroundTrackRef = useRef<HTMLAudioElement | null>(null);
   const soundManagerInitializedRef = useRef(false);

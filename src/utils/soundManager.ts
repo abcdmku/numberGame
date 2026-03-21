@@ -6,7 +6,7 @@ interface AudioWindow extends Window {
 class SoundManager {
   private audioContext: AudioContext | null = null;
   private enabled: boolean = true;
-  private volume: number = 0.3;
+  private volume: number = 0.25;
 
   constructor() {
     this.initializeAudio();
